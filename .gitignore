@@ -1,0 +1,9 @@
+node_modules/
+.env
+data/
+public/vendor/
+public/fonts/
+public/textures/*
+!public/textures/.gitkeep
+*.png
+!public/**/*.png

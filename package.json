@@ -1,0 +1,31 @@
+{
+  "name": "mirror-maison",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Miroir connecté : page web plein écran pour Raspberry Pi",
+  "scripts": {
+    "start": "bun server/index.js",
+    "mock": "MOCK=1 bun server/index.js",
+    "dev": "MOCK=1 bun --watch server/index.js",
+    "test": "TZ=Europe/Zurich bun test",
+    "postinstall": "bun scripts/vendor.js",
+    "textures": "bun scripts/textures.js",
+    "check:weather": "bun scripts/check.js weather",
+    "check:alert": "bun scripts/check.js alert",
+    "check:ics": "bun scripts/check.js ics",
+    "check:plex": "bun scripts/check.js plex",
+    "check:ping": "bun scripts/check.js ping",
+    "check:xiaomi": "bun scripts/check.js xiaomi",
+    "check:clouds": "bun scripts/check.js clouds"
+  },
+  "dependencies": {
+    "@fontsource/space-grotesk": "^5.3.0",
+    "node-ical": "^0.27.3",
+    "three": "^0.186.1"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.35.5"
+  },
+  "trustedDependencies": ["sharp"]
+}

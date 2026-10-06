@@ -18,7 +18,7 @@ remove_kiosk() {
   return 0
 }
 
-if [ "${1:-}" = "--remove-kiosk" ]; then remove_kiosk; exit 0; fi
+if [ "${1:-}" = "--remove-kiosk" ]; then remove_kiosk; "$DIR/deploy/hide-cursor.sh" --undo; exit 0; fi
 
 # 1. Bun (64 bits uniquement sur ARM)
 if [ "$(uname -m)" != "aarch64" ] && [ "$(uname -m)" != "x86_64" ]; then
@@ -74,6 +74,7 @@ if [ "${1:-}" = "--kiosk" ]; then
     mkdir -p "$(dirname "$LABWC_AUTOSTART")"
     echo "$DIR/deploy/kiosk.sh & $MARK" >> "$LABWC_AUTOSTART"
     echo "Kiosque ajouté à $LABWC_AUTOSTART (Wayland / labwc)"
+    "$DIR/deploy/hide-cursor.sh"
   else
     mkdir -p "$(dirname "$LXDE_AUTOSTART")"
     [ -f "$LXDE_AUTOSTART" ] || cp /etc/xdg/lxsession/LXDE-pi/autostart "$LXDE_AUTOSTART" 2>/dev/null || true

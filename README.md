@@ -43,7 +43,9 @@ sudo reboot
 - **Wayland / labwc** (Raspberry Pi OS récent) : ajoute une ligne à `~/.config/labwc/autostart`.
 - **X11 / LXDE** : ajoute une ligne à `~/.config/lxsession/LXDE-pi/autostart`. `kiosk.sh` coupe aussi l'économiseur (`xset`) et masque le curseur (`unclutter`).
 
-La page masque elle-même le curseur (`cursor: none`). La veille de l'écran est désactivée par
+La page masque elle-même le curseur (`cursor: none`). Sous labwc, c'est le compositeur qui dessine la souris (visible
+dès qu'elle bouge, par exemple via VNC) : `deploy/hide-cursor.sh` installe un thème de curseur transparent
+(`--undo` pour revenir au curseur normal ; effet au prochain démarrage de session). La veille de l'écran est désactivée par
 `raspi-config nonint do_blanking 1`, qui couvre les deux sessions.
 
 **Rotation portrait** : si l'écran était déjà en portrait avec MagicMirror, il n'y a rien à faire. Sinon, deux options :

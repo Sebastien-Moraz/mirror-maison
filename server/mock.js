@@ -106,9 +106,14 @@ export function sensors() {
 }
 
 // MOCK_PLEX=0..3 : nombre de lectures simulées (1 par défaut, comme la maquette).
+// MOCK_PLEX=cycle : 0, 1, 2, 3, 2, 1… lectures, en changeant toutes les 8 s (pour voir les animations).
+const CYCLE = [0, 1, 2, 3, 2, 1];
 export function plex() {
-  const count = Math.max(0, Math.min(3, Number(process.env.MOCK_PLEX ?? 1)));
   const elapsed = Date.now() - startedAt;
+  const count =
+    process.env.MOCK_PLEX === "cycle"
+      ? CYCLE[Math.floor(elapsed / 8000) % CYCLE.length]
+      : Math.max(0, Math.min(3, Number(process.env.MOCK_PLEX ?? 1)));
   const sessions = [
     {
       key: "demo",

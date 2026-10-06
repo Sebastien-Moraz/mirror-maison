@@ -134,7 +134,8 @@ svg { display: block; }
 .plex-loc.lan { color: var(--green); }
 .plex-loc.wan { color: var(--amber); }
 .plex-bar { flex: none; height: 3px; background: #1c1c1c; border-radius: 2px; overflow: hidden; }
-.plex-fill { height: 100%; background: var(--green); width: 0; }
+/* Remplissage animé par transform (composé par le GPU) : la barre avance en continu entre deux secondes. */
+.plex-fill { height: 100%; background: var(--green); transform-origin: left; transform: scaleX(0); transition: transform 1s linear; }
 
 /* Cartes compactes quand les cartes normales ne tiennent pas sous les agendas (voir fitPlex) */
 .plex.compact { padding: 16px 22px; gap: 18px; }

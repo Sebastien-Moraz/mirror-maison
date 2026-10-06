@@ -259,24 +259,68 @@ function createPlexCard() {
   return { root, parts, anchor: null, shown: {} };
 }
 
+// --- Animations des sessions Plex : uniquement position et opacité (composées par le GPU du Pi).
+// Technique FLIP : on mesure les blocs, on applique le changement, puis chaque bloc glisse
+// depuis son ancienne place ; les nouveaux blocs (carte, bandeau horaire) apparaissent en fondu.
+const ANIM = { duration: 550, easing: "cubic-bezier(.2,.7,.2,1)" };
+const flipTargets = () => [...document.querySelectorAll(".screen > :not(.plex-list), .plex-list > .plex")];
+
+function flip(mutate) {
+  const before = new Map();
+  for (const el of flipTargets()) if (!el.hidden) before.set(el, el.getBoundingClientRect().top);
+  const eventsBefore = agendaMax;
+  mutate();
+  for (const el of flipTargets()) {
+    if (el.hidden || el.classList.contains("exiting")) continue;
+    if (!before.has(el)) {
+      el.animate([{ opacity: 0, transform: "translateY(16px)" }, { opacity: 1, transform: "none" }], ANIM);
+      continue;
+    }
+    const dy = before.get(el) - el.getBoundingClientRect().top;
+    if (Math.abs(dy) > 0.5) el.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], ANIM);
+  }
+  // Agendas plus longs ou plus courts : le contenu change d'un coup, on l'adoucit par un fondu.
+  if (agendaMax !== eventsBefore) $("agendas").animate([{ opacity: 0.3 }, { opacity: 1 }], ANIM);
+}
+
+// Une lecture terminée : la carte s'efface en glissant, puis les autres blocs reprennent la place.
+function removePlexCard(key, card) {
+  plexCards.delete(key);
+  card.root.classList.add("exiting");
+  card.root
+    .animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(16px)" }], { ...ANIM, duration: 350, fill: "forwards" })
+    .finished.then(() => flip(() => {
+      card.root.remove();
+      fitLayout();
+    }));
+}
+
 function onPlexData() {
   const sessions = Array.isArray(state.plex) ? state.plex : state.plex ? [state.plex] : [];
   const now = Date.now();
   const keys = new Set(sessions.map((s) => s.key));
-  for (const [key, card] of plexCards) if (!keys.has(key)) plexCards.delete(key) && card.root.remove();
+  for (const [key, card] of plexCards) if (!keys.has(key)) removePlexCard(key, card);
+
+  const added = sessions.some((s) => !plexCards.has(s.key));
   for (const s of sessions) {
     let card = plexCards.get(s.key);
     if (!card) plexCards.set(s.key, (card = createPlexCard()));
     card.anchor = nextAnchor(card.anchor, s, now);
     card.session = s;
   }
-  const list = $("plex");
-  sessions.forEach((s, i) => {
-    const card = plexCards.get(s.key);
-    if (list.children[i] !== card.root) list.insertBefore(card.root, list.children[i] ?? null);
-    safe(() => renderPlexCard(card));
-  });
-  fitLayout();
+
+  const place = () => {
+    const list = $("plex");
+    const live = () => [...list.children].filter((c) => !c.classList.contains("exiting"));
+    sessions.forEach((s, i) => {
+      const card = plexCards.get(s.key);
+      if (live()[i] !== card.root) list.insertBefore(card.root, live()[i] ?? null);
+      safe(() => renderPlexCard(card));
+    });
+    fitLayout();
+  };
+  if (added) flip(place);
+  else place();
 }
 
 // Mise en page selon la place réelle (alerte, titres sur deux lignes, lectures Plex) : on mesure.
@@ -351,7 +395,7 @@ function renderPlexProgress() {
   for (const { anchor, parts } of plexCards.values()) {
     const pos = interpolateOffset(anchor, now);
     parts.time.textContent = `${formatDuration(pos)} / ${formatDuration(anchor.duration)}`;
-    parts.fill.style.width = `${anchor.duration ? (100 * pos) / anchor.duration : 0}%`;
+    parts.fill.style.transform = `scaleX(${anchor.duration ? Math.min(1, pos / anchor.duration) : 0})`;
   }
 }
 

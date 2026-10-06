@@ -4,6 +4,11 @@ DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PORT=$(grep -s '^PORT=' "$DIR/.env" | cut -d= -f2)
 BASE="http://localhost:${PORT:-8090}"
 PROFILE="$HOME/.config/mirror-kiosk"
+# Journal du kiosque (rotation simple : on repart à zéro à chaque lancement)
+LOG="$HOME/.cache/mirror-kiosk.log"
+mkdir -p "$(dirname "$LOG")"
+exec >"$LOG" 2>&1
+echo "kiosque : $(date) WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-} DISPLAY=${DISPLAY:-}"
 
 # Rotation optionnelle (ROTATE=90|180|270 dans .env) si l'écran n'est pas déjà tourné par le système.
 ROTATE=$(grep -s '^ROTATE=' "$DIR/.env" | cut -d= -f2)
@@ -37,6 +42,6 @@ OZONE=()
 
 exec "$BROWSER" "${OZONE[@]}" \
   --kiosk --noerrdialogs --disable-infobars --check-for-update-interval=31536000 \
-  --user-data-dir="$PROFILE" --disable-session-crashed-bubble --disable-features=Translate \
+  --user-data-dir="$PROFILE" --disable-session-crashed-bubble --disable-features=Translate,TranslateUI --lang=fr \
   --overscroll-history-navigation=0 --disable-pinch --password-store=basic \
   "$BASE/"

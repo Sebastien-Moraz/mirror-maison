@@ -51,7 +51,20 @@ La page masque elle-même le curseur (`cursor: none`). La veille de l'écran est
 - l'outil *Screen Configuration* du bureau (sous labwc, il écrit `~/.config/kanshi/config`) ;
 - `ROTATE=90` (ou `270`) dans `.env`. `kiosk.sh` applique alors `wlr-randr --transform` sous Wayland, ou `xrandr --rotate` sous X11.
 
-**Revenir à MagicMirror :**
+**Sur ce Pi (PI4, 192.168.1.151)**, la bascule a été faite à la main : `~/.config/labwc/autostart` garde la rotation
+(`wlr-randr --output HDMI-A-2 --transform 270`) et lance `deploy/kiosk.sh` à la place de pm2. L'ancien fichier est
+sauvegardé dans `~/.config/labwc/autostart.magicmirror.bak`. Journal du kiosque : `~/.cache/mirror-kiosk.log`.
+
+Pour revenir à MagicMirror sur ce Pi :
+
+```sh
+cp ~/.config/labwc/autostart.magicmirror.bak ~/.config/labwc/autostart
+sudo systemctl disable --now mirror-maison   # facultatif
+pm2 start mm && pm2 save
+sudo reboot
+```
+
+**Revenir à MagicMirror (installation via `--kiosk`) :**
 
 ```sh
 ./install.sh --remove-kiosk
@@ -75,6 +88,13 @@ bun run mock      # ou bun run dev (rechargement automatique du serveur)
 
 ```sh
 cd ~/mirror-maison && git pull && ./install.sh
+```
+
+Sans dépôt distant, depuis le poste de développement :
+
+```sh
+rsync -a --exclude node_modules --exclude .git --exclude data ./ pi@192.168.1.151:mirror-maison/
+ssh pi@192.168.1.151 'cd ~/mirror-maison && ./install.sh'
 ```
 
 La page se recharge seule dès que le serveur annonce une nouvelle version. Elle se recharge aussi chaque nuit à 04:00.

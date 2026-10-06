@@ -9,7 +9,7 @@ Prérequis : **Raspberry Pi OS 64 bits** (Bun n'existe pas en 32 bits sur ARM) e
 ## Installation sur le Pi
 
 ```sh
-git clone <ce dépôt> ~/mirror-maison && cd ~/mirror-maison
+git clone https://github.com/Sebastien-Moraz/mirror-maison.git ~/mirror-maison && cd ~/mirror-maison
 ./install.sh            # Bun, dépendances, textures NASA, .env, service systemd
 nano .env               # PLEX_TOKEN, ICS_LIONEL, ICS_VERO, ICS_CHLOE, ICS_SEB
 sudo systemctl restart mirror-maison
@@ -88,18 +88,20 @@ bun run mock      # ou bun run dev (rechargement automatique du serveur)
 
 ## Mise à jour
 
-```sh
-cd ~/mirror-maison && git pull && ./install.sh
-```
-
-Sans dépôt distant, depuis le poste de développement :
+Le Pi est un clone du dépôt GitHub. Sur le Pi :
 
 ```sh
-rsync -a --exclude node_modules --exclude .git --exclude data ./ pi@192.168.1.151:mirror-maison/
-ssh pi@192.168.1.151 'cd ~/mirror-maison && ./install.sh'
+~/mirror-maison/update.sh            # git pull + install.sh (relance le service) ; rien à faire si déjà à jour
 ```
 
-La page se recharge seule dès que le serveur annonce une nouvelle version. Elle se recharge aussi chaque nuit à 04:00.
+Depuis le poste de développement, après un `git push` :
+
+```sh
+ssh pi@192.168.1.151 '~/mirror-maison/update.sh'
+```
+
+La page se recharge seule dès que le serveur annonce une nouvelle version (et chaque nuit à 04:00).
+`.env`, `data/` (caches) et les textures ne sont pas suivis par git : une mise à jour ne les touche pas.
 
 ## Configuration
 

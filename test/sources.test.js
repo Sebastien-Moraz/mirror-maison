@@ -84,3 +84,115 @@ describe("agendas ICS", () => {
     expect(upcomingEvents(ics, { now: later, max: 1 })[0].title).not.toBe("Vacances");
   });
 });
+
+import { pickSession, resolutionLabel } from "../server/sources/plex.js";
+import { nextHostState } from "../server/sources/hosts.js";
+import { parseXiaomiMessage } from "../server/sources/xiaomi.js";
+
+describe("Plex", () => {
+  const ep = {
+    type: "episode",
+    sessionKey: "12",
+    grandparentTitle: "Frieren",
+    parentIndex: 1,
+    index: 2,
+    title: "Magie ou pas, peu importe",
+    grandparentThumb: "/library/metadata/5/thumb/1",
+    viewOffset: 842000,
+    duration: 1560000,
+    User: { title: "Seb", thumb: "https://plex.tv/users/abc/avatar?c=1" },
+    Player: { state: "playing" },
+    Session: { location: "lan" },
+    Media: [{ videoResolution: "1080" }],
+  };
+  const movie = {
+    type: "movie",
+    sessionKey: "13",
+    title: "Dune",
+    year: 2021,
+    thumb: "/library/metadata/9/thumb/2",
+    viewOffset: 10,
+    duration: 100,
+    User: { title: "Véro" },
+    Player: { state: "paused" },
+    Session: { location: "wan" },
+    TranscodeSession: {},
+    Media: [{ videoResolution: "4k" }],
+  };
+  const wrap = (...m) => ({ MediaContainer: { size: m.length, Metadata: m } });
+
+  test("aucune session", () => expect(pickSession({ MediaContainer: { size: 0 } }, new Map())).toBeNull());
+  test("épisode", () =>
+    expect(pickSession(wrap(ep), new Map(), 0)).toEqual({
+      key: "12",
+      state: "playing",
+      title: "Frieren",
+      subtitle: "S1 · É2 Magie ou pas, peu importe",
+      viewOffset: 842000,
+      duration: 1560000,
+      user: "Seb",
+      avatar: "/api/plex/image?path=https%3A%2F%2Fplex.tv%2Fusers%2Fabc%2Favatar%3Fc%3D1&w=52&h=52",
+      cover: "/api/plex/image?path=%2Flibrary%2Fmetadata%2F5%2Fthumb%2F1&w=136&h=200",
+      location: "lan",
+      mode: "Lecture directe",
+      quality: "1080p",
+    }));
+  test("film en pause, distant, transcodé, 4K", () => {
+    const s = pickSession(wrap(movie), new Map(), 0);
+    expect([s.title, s.subtitle, s.state, s.location, s.mode, s.quality, s.avatar]).toEqual([
+      "Dune", "2021", "paused", "wan", "Transcodage", "4K", null,
+    ]);
+  });
+  test("plusieurs sessions : la plus récemment active", () => {
+    const activity = new Map();
+    pickSession(wrap(ep, movie), activity, 0);
+    // Seul le film change ensuite : il devient la session la plus active.
+    expect(pickSession(wrap(ep, { ...movie, viewOffset: 20, Player: { state: "playing" } }), activity, 5000).key).toBe("13");
+    // Puis l'épisode avance à son tour.
+    expect(pickSession(wrap({ ...ep, viewOffset: 852000 }, { ...movie, viewOffset: 20, Player: { state: "playing" } }), activity, 9000).key).toBe("12");
+  });
+  test("résolutions", () => {
+    expect(resolutionLabel("720")).toBe("720p");
+    expect(resolutionLabel("sd")).toBe("SD");
+    expect(resolutionLabel(undefined)).toBe("");
+  });
+});
+
+describe("ping", () => {
+  test("down après 2 échecs consécutifs", () => {
+    let s = nextHostState(undefined, true);
+    s = nextHostState(s, false);
+    expect(s.status).toBe("up");
+    s = nextHostState(s, false);
+    expect(s.status).toBe("down");
+    expect(nextHostState(s, true).status).toBe("up");
+  });
+  test("inconnu tant que rien n'a répondu", () => expect(nextHostState(undefined, false).status).toBe("unknown"));
+});
+
+describe("Xiaomi", () => {
+  test("report v1 (data en chaîne, centièmes)", () =>
+    expect(
+      parseXiaomiMessage('{"cmd":"report","model":"sensor_ht","sid":"158d0008ab2c11","data":"{\\"temperature\\":\\"2324\\",\\"humidity\\":\\"6215\\"}"}'),
+    ).toEqual({ cmd: "report", sid: "158d0008ab2c11", model: "sensor_ht", temperature: 23.24, humidity: 62.15 }));
+  test("température négative", () =>
+    expect(parseXiaomiMessage('{"cmd":"read_ack","sid":"x","data":"{\\"temperature\\":\\"-525\\"}"}').temperature).toBe(-5.25));
+  test("protocole v2 (params)", () =>
+    expect(parseXiaomiMessage('{"cmd":"report","sid":"x","params":[{"temperature":1850},{"humidity":7000}]}')).toMatchObject({
+      temperature: 18.5,
+      humidity: 70,
+    }));
+  test("heartbeat sans mesure", () =>
+    expect(parseXiaomiMessage('{"cmd":"heartbeat","sid":"x","data":"{\\"voltage\\":3005}"}')).toEqual({ cmd: "heartbeat", sid: "x", model: undefined }));
+  test("capteur perdu : 10000 et humidité 0 → erreur, aucune valeur", () => {
+    const m = parseXiaomiMessage(
+      '{"cmd":"read_ack","model":"sensor_ht","sid":"158d00034f8c21","data":"{\\"voltage\\":3005,\\"temperature\\":\\"10000\\",\\"humidity\\":\\"0\\"}"}',
+    );
+    expect(m.error).toBe("valeur invalide");
+    expect(m.temperature).toBeUndefined();
+    expect(m.humidity).toBeUndefined();
+  });
+  test("No device → erreur", () =>
+    expect(parseXiaomiMessage('{"cmd":"read_ack","sid":"158d00034f804c","data":"{\\"error\\":\\"No device\\"}"}').error).toBe("No device"));
+  test("message invalide", () => expect(parseXiaomiMessage("pas du json")).toBeNull());
+});

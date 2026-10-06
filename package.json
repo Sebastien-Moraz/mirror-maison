@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Miroir connecté : page web plein écran pour Raspberry Pi",
   "scripts": {
-    "start": "bun server/index.js",
+    "start": "bun --watch server/index.js",
     "mock": "MOCK=1 bun server/index.js",
     "dev": "MOCK=1 bun --watch server/index.js",
     "test": "TZ=Europe/Zurich bun test",

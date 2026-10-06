@@ -43,6 +43,7 @@ export function createXiaomi(config, { log = console } = {}) {
   let socket;
   let lastError = null;
   let lastMessageAt = null;
+  const listeners = [];
 
   function handle(raw) {
     const m = parseXiaomiMessage(raw);
@@ -66,29 +67,44 @@ export function createXiaomi(config, { log = console } = {}) {
     );
   }
 
-  function start() {
+  function openSocket() {
     socket = dgram.createSocket({ type: "udp4", reuseAddr: true });
     socket.on("message", handle);
+    for (const fn of listeners) socket.on("message", fn);
     socket.on("error", (err) => {
       if (lastError !== err.message) log.error(`[xiaomi] ${err.message}`);
       lastError = err.message;
+      if (err.code === "EADDRINUSE" || err.syscall === "bind") {
+        // Port pris (ex. MagicMirror encore lancé) : on réessaie dans une minute.
+        socket.close();
+        socket = null;
+        setTimeout(openSocket, 60_000);
+      }
     });
     socket.bind(PORT, () => {
       try {
         socket.addMembership(MULTICAST);
+        lastError = null;
       } catch (err) {
         log.error(`[xiaomi] multicast : ${err.message}`);
         lastError = err.message;
       }
       readAll();
     });
+  }
+
+  function start() {
+    openSocket();
     setInterval(readAll, config.intervals.xiaomiRead);
     return api;
   }
 
   const api = {
     start,
-    onMessage: (fn) => socket.on("message", fn),
+    onMessage(fn) {
+      listeners.push(fn);
+      socket?.on("message", fn);
+    },
     snapshot() {
       const data = sensors.map((s) => ({ name: s.name, ...(state.get(s.sid) ?? {}) }));
       return { data, updatedAt: lastMessageAt ?? Date.now(), error: lastError };

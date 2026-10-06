@@ -1,0 +1,18 @@
+# Modèle : install.sh remplace __USER__, __DIR__ et __BUN__.
+[Unit]
+Description=Miroir maison (serveur Bun)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__DIR__
+Environment=TZ=Europe/Zurich
+ExecStart=__BUN__ server/index.js
+Restart=always
+RestartSec=5
+# Les logs vont dans journald : journalctl -u mirror-maison -f
+
+[Install]
+WantedBy=multi-user.target

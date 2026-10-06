@@ -5,6 +5,20 @@ const RESOLUTIONS = { "4k": "4K", sd: "SD" };
 export const resolutionLabel = (r) => (r ? (RESOLUTIONS[String(r).toLowerCase()] ?? (/^\d+$/.test(r) ? `${r}p` : r)) : "");
 const imageUrl = (path, w, h) => (path ? `/api/plex/image?path=${encodeURIComponent(path)}&w=${w}&h=${h}` : null);
 
+/**
+ * Mode de lecture, d'après la décision sur la vidéo (comme le tableau de bord Plex) :
+ * sans TranscodeSession → lecture directe ; vidéo copiée (seuls l'audio, les sous-titres ou le conteneur
+ * changent) → flux en direct ; vidéo réencodée → transcodage.
+ */
+export function playbackMode(m) {
+  const t = m.TranscodeSession;
+  if (!t) return "Lecture directe";
+  const video = t.videoDecision ?? (m.Media?.[0]?.Part?.[0]?.Stream ?? []).find((s) => s.streamType === 1)?.decision;
+  if (video === "transcode") return "Transcodage";
+  if (video === "copy") return "Flux en direct";
+  return video === "directplay" ? "Lecture directe" : "Transcodage";
+}
+
 const keyOf = (m) => String(m.sessionKey ?? m.Session?.id ?? m.ratingKey);
 
 function toSession(m) {
@@ -21,7 +35,7 @@ function toSession(m) {
     avatar: imageUrl(m.User?.thumb, 52, 52),
     cover: imageUrl(episode ? (m.grandparentThumb ?? m.parentThumb ?? m.thumb) : m.thumb, 136, 200),
     location: m.Session?.location === "wan" ? "wan" : "lan",
-    mode: m.TranscodeSession ? "Transcodage" : "Lecture directe",
+    mode: playbackMode(m),
     quality: resolutionLabel(media.videoResolution),
   };
 }

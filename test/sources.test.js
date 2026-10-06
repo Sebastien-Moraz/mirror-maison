@@ -85,7 +85,7 @@ describe("agendas ICS", () => {
   });
 });
 
-import { pickSessions, resolutionLabel } from "../server/sources/plex.js";
+import { pickSessions, resolutionLabel, playbackMode } from "../server/sources/plex.js";
 import { nextHostState } from "../server/sources/hosts.js";
 import { parseXiaomiMessage } from "../server/sources/xiaomi.js";
 
@@ -169,6 +169,14 @@ describe("Plex", () => {
     pickSessions(wrap(ep, movie), activity, 0);
     expect(pickSessions(wrap(movie), activity, 2000).map((s) => s.key)).toEqual(["13"]);
     expect(activity.has("12")).toBe(false);
+  });
+  test("mode de lecture d'après la décision vidéo", () => {
+    expect(playbackMode({})).toBe("Lecture directe");
+    // Rogue One : vidéo copiée, seul l'audio EAC3 est transcodé
+    expect(playbackMode({ TranscodeSession: { videoDecision: "copy", audioDecision: "transcode" } })).toBe("Flux en direct");
+    expect(playbackMode({ TranscodeSession: { videoDecision: "transcode", audioDecision: "copy" } })).toBe("Transcodage");
+    // Sans videoDecision : on lit la décision du flux vidéo
+    expect(playbackMode({ TranscodeSession: {}, Media: [{ Part: [{ Stream: [{ streamType: 1, decision: "copy" }] }] }] })).toBe("Flux en direct");
   });
   test("résolutions", () => {
     expect(resolutionLabel("720")).toBe("720p");

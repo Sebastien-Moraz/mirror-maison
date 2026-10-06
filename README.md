@@ -97,7 +97,9 @@ nouvelle carte de nuages, toutes les 3 h.
   après 30 min.
 - **Plex** : une carte par lecture en cours (lecture ou pause), dans l'ordre de démarrage. Si les cartes ne tiennent pas sous les
   agendas (mesuré dans la page), elles passent en format compact, puis les plus anciennes sont masquées ; au-delà de `plex.maxSessions` (3), seules les plus
-  récemment actives s'affichent. En démo : `MOCK_PLEX=0..3 bun run mock`. Si le serveur Plex ne répond plus pendant
+  récemment actives s'affichent. En démo : `MOCK_PLEX=0..3 bun run mock`. Mode affiché d'après la décision vidéo de Plex :
+  « Lecture directe », « Flux en direct » (vidéo copiée, seul l'audio ou le conteneur change) ou « Transcodage ».
+  Si le serveur Plex ne répond plus pendant
   ~10 s, le bloc disparaît au lieu de figer une lecture fantôme.
 
 ## Développement

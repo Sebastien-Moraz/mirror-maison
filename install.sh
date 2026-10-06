@@ -29,7 +29,8 @@ if ! command -v bun >/dev/null && [ ! -x "$HOME/.bun/bin/bun" ]; then
   echo "Installation de Bun…"
   curl -fsSL https://bun.sh/install | bash
 fi
-BUN="$(command -v bun || echo "$HOME/.bun/bin/bun")"
+export PATH="$HOME/.bun/bin:$PATH" # les scripts (postinstall) appellent « bun »
+BUN="$(command -v bun)"
 echo "Bun : $("$BUN" --version)"
 
 # 2. Paquets système utiles (ping, curl ; unclutter pour X11)

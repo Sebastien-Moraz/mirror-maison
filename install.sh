@@ -37,7 +37,8 @@ if command -v apt-get >/dev/null; then
   NEED=()
   command -v ping >/dev/null || NEED+=(iputils-ping)
   command -v curl >/dev/null || NEED+=(curl)
-  command -v unclutter >/dev/null || NEED+=(unclutter)
+  # unclutter ne sert que sous X11 (sous Wayland, la page masque elle-même le curseur)
+  if ! pgrep -x labwc >/dev/null && ! pgrep -x wayfire >/dev/null; then command -v unclutter >/dev/null || NEED+=(unclutter); fi
   if [ ${#NEED[@]} -gt 0 ]; then sudo apt-get install -y "${NEED[@]}"; fi
 fi
 

@@ -180,3 +180,15 @@ describe("capteurs", () => {
     expect(v.humid).toBe(true);
   });
 });
+
+import { alertText } from "../public/js/shared/alert.js";
+
+describe("alerte", () => {
+  const a = { code: 6, level: 2, region: "Jura vaudois", end: Date.parse("2026-10-07T06:00:00+02:00") };
+  test("texte complet", () =>
+    expect(alertText(a, NOW, TZ)).toBe("Alerte vent fort, niveau 2 · Jura vaudois, jusqu'à mercredi 06:00"));
+  test("fin le jour même : heure seule", () =>
+    expect(alertText({ ...a, end: Date.parse("2026-10-06T23:00:00+02:00") }, NOW, TZ)).toBe(
+      "Alerte vent fort, niveau 2 · Jura vaudois, jusqu'à 23:00",
+    ));
+});

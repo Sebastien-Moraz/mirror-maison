@@ -3,20 +3,25 @@
 const svg = (body, stroke = 1.3) =>
   `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 
-// Nuage fermé, réduit et remonté pour laisser la place aux précipitations.
-const CLOUD = `<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>`;
-const smallCloud = `<g transform="translate(1.8 -2.6) scale(.85)" stroke-width="${(1.3 / 0.85).toFixed(2)}">${CLOUD}</g>`;
+// Chaque élément porte sa couleur (classes .wx-* dans style.css) : soleil ambre, lune crème,
+// nuages gris clair, pluie bleue, neige glacier, éclair ambre.
+const g = (cls, body, extra = "") => `<g class="wx-${cls}"${extra}>${body}</g>`;
 
-const SUN = `<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>`;
+// Nuage fermé, réduit et remonté pour laisser la place aux précipitations.
+const CLOUD_PATH = `<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>`;
+const CLOUD = g("cloud", CLOUD_PATH);
+const smallCloud = g("cloud", CLOUD_PATH, ` transform="translate(1.8 -2.6) scale(.85)" stroke-width="${(1.3 / 0.85).toFixed(2)}"`);
+
+const SUN = g("sun", `<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>`);
 // Croissant réduit autour du centre, au gabarit de la maquette.
-const MOON = `<g transform="translate(1.8 1.8) scale(.85)" stroke-width="${(1.3 / 0.85).toFixed(2)}"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></g>`;
-const CLOUD_SUN = `<g transform="matrix(-1 0 0 1 24 0)"><path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></g>`;
-const CLOUD_MOON = `<path d="M10.188 8.5A6 6 0 0 1 16 4a1 1 0 0 0 6 6 6 6 0 0 1-3 5.197"/><path d="M13 16a3 3 0 1 1 0 6H7a5 5 0 1 1 4.9-6Z"/>`;
-const FOG = `<path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24"/><path d="M16 17H7M17 21H9"/>`;
-const DRIZZLE = `${smallCloud}<path d="M8 17.5v.01M12 18.5v.01M16 17.5v.01M10 21v.01M14 21v.01"/>`;
-const RAIN = `${smallCloud}<path d="M8.6 17.6l-.8 2.6M11.6 17.6l-.8 2.6M14.6 17.6l-.8 2.6M17.6 17.6l-.8 2.6"/>`;
-const SNOW = `${smallCloud}<path d="M8 17.5v.01M12 17.5v.01M16 17.5v.01M10 20.5v.01M14 20.5v.01"/>`;
-const THUNDER = `${smallCloud}<path d="M12.5 14.5l-2 3.5h3l-2 3.5"/>`;
+const MOON = g("moon", `<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>`, ` transform="translate(1.8 1.8) scale(.85)" stroke-width="${(1.3 / 0.85).toFixed(2)}"`);
+const CLOUD_SUN = `<g transform="matrix(-1 0 0 1 24 0)">${g("sun", `<path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/>`)}${g("cloud", `<path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/>`)}</g>`;
+const CLOUD_MOON = g("moon", `<path d="M10.188 8.5A6 6 0 0 1 16 4a1 1 0 0 0 6 6 6 6 0 0 1-3 5.197"/>`) + g("cloud", `<path d="M13 16a3 3 0 1 1 0 6H7a5 5 0 1 1 4.9-6Z"/>`);
+const FOG = g("cloud", `<path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24"/>`) + g("fog", `<path d="M16 17H7M17 21H9"/>`);
+const DRIZZLE = smallCloud + g("rain", `<path d="M8 17.5v.01M12 18.5v.01M16 17.5v.01M10 21v.01M14 21v.01"/>`);
+const RAIN = smallCloud + g("rain", `<path d="M8.6 17.6l-.8 2.6M11.6 17.6l-.8 2.6M14.6 17.6l-.8 2.6M17.6 17.6l-.8 2.6"/>`);
+const SNOW = smallCloud + g("snow", `<path d="M8 17.5v.01M12 17.5v.01M16 17.5v.01M10 20.5v.01M14 20.5v.01"/>`);
+const THUNDER = smallCloud + g("bolt", `<path d="M12.5 14.5l-2 3.5h3l-2 3.5"/>`);
 
 /** Icône météo pour un code WMO. */
 export function weatherIcon(code, isDay = true) {

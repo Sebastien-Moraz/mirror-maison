@@ -70,6 +70,15 @@ svg { display: block; }
 .feel + .meta { margin-top: 14px; }
 .rain { color: var(--blue); }
 
+/* Couleurs des icônes météo (palette du miroir) */
+.wx-sun { stroke: #f2c470; }
+.wx-moon { stroke: #efe3bd; }
+.wx-cloud { stroke: #b9bec6; }
+.wx-fog { stroke: #8a8f96; }
+.wx-rain { stroke: #8fb4ff; }
+.wx-snow { stroke: #d9e8ff; }
+.wx-bolt { stroke: #f2c470; }
+
 /* 2. Alerte */
 .alert { display: flex; align-items: center; gap: 14px; margin-top: -24px; font-size: 20px; color: var(--amber); }
 .alert-icon { width: 22px; height: 22px; }
@@ -150,7 +159,7 @@ svg { display: block; }
 .hourly-label.now { color: var(--text); }
 .hourly-icon { width: 28px; height: 28px; color: #d0d0d0; margin-top: 10px; }
 .hourly-curve { display: block; width: 100%; height: 84px; margin-top: 4px; overflow: visible; }
-.hourly-curve .line { fill: none; stroke: #5a5a5a; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.hourly-curve .dot { fill: #000; stroke: #d0d0d0; stroke-width: 2; }
+.hourly-curve .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.hourly-curve .dot { fill: #000; stroke-width: 2; }
 .hourly-curve .temp { fill: var(--text); font-size: 20px; text-anchor: middle; font-variant-numeric: tabular-nums; }
 .hourly-rain { font-size: 16px; color: var(--blue); min-height: 20px; }

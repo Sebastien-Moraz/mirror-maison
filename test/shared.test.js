@@ -214,3 +214,14 @@ describe("soleil", () => {
     expect(latLonToVector(90, 0)[1]).toBeCloseTo(1);
   });
 });
+
+import { tempColor } from "../public/js/shared/temp-color.js";
+
+describe("couleur des températures", () => {
+  test("bornes et milieu", () => {
+    expect(tempColor(-20)).toBe("#8fb4ff");
+    expect(tempColor(12)).toBe("#d0d0d0");
+    expect(tempColor(40)).toBe("#ffad6b");
+  });
+  test("interpolation entre deux paliers", () => expect(tempColor(18)).toBe("#e8bf9e"));
+});

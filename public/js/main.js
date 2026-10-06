@@ -5,6 +5,7 @@ import { formatEventWhen, eventEndMs } from "./shared/agenda.js";
 import { nextAnchor, interpolateOffset, formatDuration } from "./shared/plex.js";
 import { sensorView } from "./shared/sensors.js";
 import { alertText } from "./shared/alert.js";
+import { tempColor } from "./shared/temp-color.js";
 import { weatherIcon, alertIcon, playIcon, pauseIcon, homeIcon, globeIcon } from "./icons.js";
 
 const $ = (id) => document.getElementById(id);
@@ -147,9 +148,13 @@ function renderHourly() {
   const y = (t) => (max === min ? (top + bottom) / 2 : bottom - ((t - min) / (max - min)) * (bottom - top));
   const x = (i) => ((i + 0.5) * W) / hours.length;
   const svg = svgEl("svg", { class: "hourly-curve", viewBox: `0 0 ${W} ${H}`, "aria-label": "Température des 12 prochaines heures" });
-  svg.append(svgEl("polyline", { class: "line", points: temps.map((t, i) => `${x(i)},${y(t)}`).join(" ") }));
+  // La ligne prend la couleur de chaque heure (dégradé horizontal), les points aussi.
+  const grad = svgEl("linearGradient", { id: "hourly-grad", gradientUnits: "userSpaceOnUse", x1: x(0), y1: 0, x2: x(temps.length - 1), y2: 0 });
+  temps.forEach((t, i) => grad.append(svgEl("stop", { offset: i / (temps.length - 1), "stop-color": tempColor(t) })));
+  svg.append(svgEl("defs", {}), svgEl("polyline", { class: "line", stroke: "url(#hourly-grad)", points: temps.map((t, i) => `${x(i)},${y(t)}`).join(" ") }));
+  svg.firstChild.append(grad);
   temps.forEach((t, i) => {
-    svg.append(svgEl("circle", { class: "dot", cx: x(i), cy: y(t), r: 4 }));
+    svg.append(svgEl("circle", { class: "dot", cx: x(i), cy: y(t), r: 4, stroke: tempColor(t) }));
     svg.append(svgEl("text", { class: "temp", x: x(i), y: y(t) - 13 }, `${Math.round(t)}°`));
   });
 

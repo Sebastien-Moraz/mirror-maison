@@ -192,3 +192,25 @@ describe("alerte", () => {
       "Alerte vent fort, niveau 2 · Jura vaudois, jusqu'à 23:00",
     ));
 });
+
+import { subsolarPoint, latLonToVector } from "../public/js/shared/sun.js";
+
+describe("soleil", () => {
+  test("équinoxe de mars à midi UTC : soleil au zénith près de l'équateur et de Greenwich", () => {
+    const p = subsolarPoint(new Date("2026-03-20T12:00:00Z"));
+    expect(Math.abs(p.lat)).toBeLessThan(0.5);
+    expect(Math.abs(p.lon)).toBeLessThan(3);
+  });
+  test("solstice de juin : déclinaison ≈ +23.4°", () =>
+    expect(subsolarPoint(new Date("2026-06-21T12:00:00Z")).lat).toBeCloseTo(23.43, 1));
+  test("à 18:00 UTC début octobre : ≈ 93° O (équation du temps +12 min), déclinaison ≈ −5.3°", () => {
+    const p = subsolarPoint(new Date("2026-10-06T18:00:00Z"));
+    expect(p.lon).toBeCloseTo(-93, 0);
+    expect(p.lat).toBeCloseTo(-5.3, 0);
+  });
+  test("repère de la sphère", () => {
+    const [x, y, z] = latLonToVector(0, 90);
+    expect([x, y, z].map((v) => Math.round(v))).toEqual([0, 0, -1]);
+    expect(latLonToVector(90, 0)[1]).toBeCloseTo(1);
+  });
+});

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1080, height=1920">
+  <title>Miroir</title>
+  <link rel="preload" href="/fonts/space-grotesk-300.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/space-grotesk-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="importmap">{ "imports": { "three": "/vendor/three.module.js" } }</script>
+</head>
+<body>
+  <main class="screen">
+    <header class="head">
+      <div class="head-left">
+        <div class="date" id="date"></div>
+        <div class="clock"><span class="hm" id="hm"></span><span class="sec" id="sec"></span></div>
+        <ul class="hosts" id="hosts"></ul>
+      </div>
+      <div class="head-right" id="now" hidden>
+        <div class="now-main"><span class="now-icon" id="now-icon"></span><span class="now-temp" id="now-temp"></span></div>
+        <div class="feel" id="feel"></div>
+        <div class="meta" id="wind"></div>
+        <div class="meta" id="sun"></div>
+        <div class="meta rain" id="rain" hidden></div>
+      </div>
+    </header>
+
+    <div class="alert" id="alert" hidden><span class="alert-icon" id="alert-icon"></span><span id="alert-text"></span></div>
+
+    <section class="forecast" id="forecast"></section>
+
+    <section class="middle">
+      <div class="globe"><canvas id="globe" width="560" height="560"></canvas></div>
+      <ul class="sensors" id="sensors"></ul>
+    </section>
+
+    <section class="agendas" id="agendas"></section>
+
+    <section class="plex" id="plex" hidden>
+      <div class="plex-cover"><img id="plex-cover" alt=""></div>
+      <div class="plex-body">
+        <div class="plex-line1">
+          <span class="plex-state" id="plex-state"></span>
+          <span class="plex-title" id="plex-title"></span>
+          <span class="plex-time" id="plex-time"></span>
+        </div>
+        <div class="plex-sub" id="plex-sub"></div>
+        <div class="plex-meta">
+          <span class="plex-avatar" id="plex-avatar"><span id="plex-initial"></span><img id="plex-avatar-img" alt="" hidden></span>
+          <span class="plex-user" id="plex-user"></span>
+          <span class="sep">·</span>
+          <span class="plex-loc" id="plex-loc"></span>
+          <span class="sep">·</span>
+          <span id="plex-mode"></span>
+        </div>
+        <div class="plex-bar"><div class="plex-fill" id="plex-fill"></div></div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

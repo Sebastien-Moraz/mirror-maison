@@ -107,7 +107,7 @@ export function plex() {
 export function plexImage() {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="136" height="200" viewBox="0 0 136 200">
 <rect width="136" height="200" fill="#1d2521"/>
-<text x="68" y="104" fill="#6b746f" font-family="sans-serif" font-size="15" letter-spacing="1.5" text-anchor="middle">COVER</text></svg>`;
+<text x="68" y="104" fill="#6b746f" font-family="sans-serif" font-size="19" letter-spacing="2" text-anchor="middle">COVER</text></svg>`;
   return new Response(svg, { headers: { "content-type": "image/svg+xml" } });
 }
 

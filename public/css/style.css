@@ -1,0 +1,123 @@
+@font-face { font-family: "Space Grotesk"; font-weight: 300; src: url("/fonts/space-grotesk-300.woff2") format("woff2"); }
+@font-face { font-family: "Space Grotesk"; font-weight: 400; src: url("/fonts/space-grotesk-400.woff2") format("woff2"); }
+@font-face { font-family: "Space Grotesk"; font-weight: 500; src: url("/fonts/space-grotesk-500.woff2") format("woff2"); }
+
+:root {
+  --text: #ececec;
+  --secondary: #a8a8a8;
+  --tertiary: #8a8a8a;
+  --dim: #7f7f7f;
+  --offline: #5a5a5a;
+  --green: #6fd49a;
+  --red: #ff6b5b;
+  --amber: #f2c470;
+  --warm: #ffad6b;
+  --blue: #8fb4ff;
+  --line: #262626;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  background: #000;
+  color: var(--text);
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  cursor: none;
+}
+
+ul { list-style: none; margin: 0; padding: 0; }
+svg { display: block; }
+
+.screen {
+  width: 1080px;
+  height: 1920px;
+  padding: 64px 64px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  overflow: hidden;
+}
+
+/* 1. En-tête */
+.head { display: flex; justify-content: space-between; align-items: flex-start; }
+.date { font-size: 30px; color: var(--secondary); }
+.clock { display: flex; align-items: flex-start; margin-top: 6px; }
+.hm { font-size: 210px; font-weight: 300; letter-spacing: -0.045em; line-height: 0.88; }
+.sec { font-size: 60px; font-weight: 300; color: #6e6e6e; line-height: 1; margin-top: 19px; margin-left: 14px; }
+.hosts { display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 6px; margin-top: 28px; font-size: 18px; color: var(--tertiary); }
+.hosts li { display: flex; align-items: center; gap: 7px; }
+.hosts .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); }
+.hosts .down { color: var(--red); }
+.hosts .down .dot { background: var(--red); }
+.hosts .unknown .dot { background: var(--offline); }
+
+.head-left { flex: none; }
+.head-right { flex: 1; min-width: 0; margin-top: 5px; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.now-main { display: flex; align-items: center; gap: 18px; }
+.now-icon { width: 72px; height: 72px; color: var(--text); }
+.now-temp { font-size: 112px; font-weight: 300; line-height: 1; letter-spacing: -0.02em; }
+.feel { font-size: 24px; color: var(--secondary); margin-top: 8px; }
+.meta { font-size: 19px; color: var(--tertiary); margin-top: 9px; }
+.feel + .meta { margin-top: 14px; }
+.rain { color: var(--blue); }
+
+/* 2. Alerte */
+.alert { display: flex; align-items: center; gap: 14px; margin-top: -24px; font-size: 20px; color: var(--amber); }
+.alert-icon { width: 22px; height: 22px; }
+
+/* 3. Prévisions */
+.forecast { display: grid; grid-template-columns: repeat(5, 1fr); }
+.day { display: flex; flex-direction: column; align-items: center; }
+.day-label { font-size: 18px; letter-spacing: 0.08em; color: var(--tertiary); }
+.day-icon { width: 40px; height: 40px; color: #d0d0d0; margin-top: 11px; }
+.day-temps { margin-top: 10px; display: flex; align-items: baseline; gap: 14px; }
+.day-max { font-size: 28px; }
+.day-min { font-size: 22px; color: var(--dim); }
+
+/* 4. Globe + capteurs */
+.middle { display: flex; align-items: center; gap: 24px; }
+.globe { width: 560px; height: 560px; flex: none; margin: -20px 0 -20px -34px; }
+.globe canvas { width: 560px; height: 560px; display: block; }
+.sensors { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.sensor { display: grid; grid-template-columns: minmax(0, 1fr) auto 48px; column-gap: 15px; align-items: baseline; }
+.sensor-name { font-size: 20px; color: var(--secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sensor-temp { font-size: 25px; text-align: right; }
+.sensor-hum { font-size: 16px; color: var(--dim); text-align: right; }
+.sensor .warm { color: var(--warm); }
+.sensor .humid { color: var(--blue); }
+.sensor.offline .sensor-temp { color: var(--offline); }
+
+/* 5. Agendas */
+.agendas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.card { border: 1px solid var(--line); border-radius: 16px; padding: 18px 18px 20px; min-height: 270px; min-width: 0; }
+.card-name { font-size: 24px; font-weight: 500; }
+.events { margin-top: 14px; display: flex; flex-direction: column; gap: 16px; }
+.event-when { font-size: 16px; color: var(--tertiary); }
+.event-title { font-size: 21px; line-height: 1.2; margin-top: 3px; overflow-wrap: anywhere; }
+
+/* 6. Plex */
+.plex { margin-top: auto; display: flex; gap: 22px; border: 1px solid var(--line); border-radius: 16px; padding: 18px 22px; }
+.plex-cover { width: 68px; height: 100px; flex: none; border-radius: 6px; overflow: hidden; background: #1d2521; }
+.plex-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.plex-body { flex: 1; min-width: 0; height: 100px; display: flex; flex-direction: column; justify-content: space-between; }
+.plex-line1 { display: flex; align-items: center; }
+.plex-state { width: 15px; height: 15px; color: var(--green); margin-right: 14px; flex: none; }
+.plex-title { font-size: 24px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plex-time { font-size: 17px; color: var(--tertiary); margin-left: 16px; }
+.plex-sub { font-size: 18px; color: var(--secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plex-meta { display: flex; align-items: center; gap: 10px; font-size: 16px; color: var(--tertiary); white-space: nowrap; }
+.plex-avatar { position: relative; width: 26px; height: 26px; border-radius: 50%; overflow: hidden; background: #2c3a55; color: #d0d0d0; font-size: 13px; display: flex; align-items: center; justify-content: center; flex: none; }
+.plex-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.plex-user { color: #d0d0d0; }
+.plex-loc { display: flex; align-items: center; gap: 6px; }
+.plex-loc svg { width: 14px; height: 14px; }
+.plex-loc.lan { color: var(--green); }
+.plex-loc.wan { color: var(--amber); }
+.plex-bar { height: 3px; background: #1c1c1c; border-radius: 2px; overflow: hidden; }
+.plex-fill { height: 100%; background: var(--green); width: 0; }

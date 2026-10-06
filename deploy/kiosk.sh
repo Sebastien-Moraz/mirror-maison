@@ -2,7 +2,7 @@
 # Lance Chromium en kiosque sur la page du miroir. Fonctionne sous X11 et sous Wayland (labwc).
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PORT=$(grep -s '^PORT=' "$DIR/.env" | cut -d= -f2)
-URL="http://localhost:${PORT:-8090}/"
+BASE="http://localhost:${PORT:-8090}"
 PROFILE="$HOME/.config/mirror-kiosk"
 
 # Rotation optionnelle (ROTATE=90|180|270 dans .env) si l'écran n'est pas déjà tourné par le système.
@@ -25,7 +25,7 @@ if [ -z "$WAYLAND_DISPLAY" ] && command -v xset >/dev/null; then
 fi
 
 # Attend que le serveur réponde (démarrage du Pi).
-for _ in $(seq 1 60); do curl -sf "$URL/api/version" >/dev/null && break; sleep 2; done
+for _ in $(seq 1 60); do curl -sf "$BASE/api/version" >/dev/null && break; sleep 2; done
 
 # Évite la bulle « Chromium ne s'est pas fermé correctement » après une coupure.
 PREFS="$PROFILE/Default/Preferences"
@@ -39,4 +39,4 @@ exec "$BROWSER" "${OZONE[@]}" \
   --kiosk --noerrdialogs --disable-infobars --check-for-update-interval=31536000 \
   --user-data-dir="$PROFILE" --disable-session-crashed-bubble --disable-features=Translate \
   --overscroll-history-navigation=0 --disable-pinch --password-store=basic \
-  "$URL"
+  "$BASE/"

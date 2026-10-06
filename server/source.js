@@ -1,15 +1,42 @@
 // Une source interrogée à son rythme. Garde la dernière valeur valide et son horodatage :
 // si la source tombe, on continue de servir l'ancienne valeur, avec l'erreur en plus.
+// Avec `file`, cette valeur est aussi gardée sur disque et survit à un redémarrage hors ligne.
+import { readFileSync } from "node:fs";
+import { mkdir, rename, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 
 export class Source {
-  constructor(name, fetcher, intervalMs) {
+  constructor(name, fetcher, intervalMs, { file } = {}) {
     this.name = name;
     this.fetcher = fetcher;
     this.intervalMs = intervalMs;
+    this.file = file;
     this.value = null;
     this.updatedAt = null;
     this.error = null;
     this.timer = null;
+    if (file) this.load();
+  }
+
+  load() {
+    try {
+      const saved = JSON.parse(readFileSync(this.file, "utf8"));
+      this.value = saved.value;
+      this.updatedAt = saved.updatedAt;
+    } catch {
+      // pas encore de cache : normal au premier démarrage
+    }
+  }
+
+  async save() {
+    try {
+      await mkdir(dirname(this.file), { recursive: true });
+      const tmp = `${this.file}.tmp`;
+      await writeFile(tmp, JSON.stringify({ value: this.value, updatedAt: this.updatedAt }));
+      await rename(tmp, this.file); // remplacement atomique : jamais de cache à moitié écrit
+    } catch (err) {
+      console.error(`[${this.name}] cache disque : ${err.message}`);
+    }
   }
 
   async tick() {
@@ -18,6 +45,7 @@ export class Source {
       if (value !== undefined) {
         this.value = value;
         this.updatedAt = Date.now();
+        if (this.file) await this.save();
       }
       if (this.error) console.log(`[${this.name}] rétabli`);
       this.error = null;

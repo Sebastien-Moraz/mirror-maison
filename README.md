@@ -88,6 +88,17 @@ Globe : textures 4096×2048 par défaut. Le navigateur repasse seul en 2048×102
 ce mode avec `globe.textureSize: 2048` ou `?tex=2048`. Le globe n'est redessiné qu'une fois par minute et à chaque
 nouvelle carte de nuages, toutes les 3 h.
 
+## Sans Internet
+
+- Page, police, three.js et textures sont servis par le Pi. Plex, les capteurs et les pings passent par le réseau local.
+- Météo, alerte et agendas : la dernière valeur reçue reste affichée. Elle est aussi gardée dans `data/*.json`, ce qui
+  la conserve même si le Pi redémarre pendant la coupure. Le serveur garde 10 événements par personne (la page en
+  affiche 3), pour que les suivants prennent la place des événements passés.
+- Nuages : dernière image gardée dans `data/`. Avatars Plex (plex.tv) : remplacés par l'initiale.
+- Le point « Internet » passe au rouge : c'est voulu.
+- Le Pi n'a pas d'horloge sauvegardée par pile : s'il redémarre sans Internet, l'heure dépend de `fake-hwclock`,
+  sauf si un serveur NTP local est configuré (par exemple la box, dans `/etc/systemd/timesyncd.conf`).
+
 ## Notes
 
 - **Alerte** : endpoint de MMM-WetteralarmCH (`my.wetteralarm.ch/v6/alarms/meteo/with-regions.json`), région `VD Jura`.

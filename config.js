@@ -62,7 +62,8 @@ export default {
     { name: "Chloé", color: "#f2c27a", env: "ICS_CHLOE" },
     { name: "Seb", color: "#86dcae", env: "ICS_SEB" },
   ],
-  calendar: { maxEvents: 3, daysAhead: 60 },
+  // La page affiche maxEvents ; le serveur en garde `keep` pour continuer à afficher les suivants si Internet coupe.
+  calendar: { maxEvents: 3, keep: 10, daysAhead: 60 },
 
   plex: { maxSessions: 3 }, // au-delà de 2, les cartes passent en format compact
 

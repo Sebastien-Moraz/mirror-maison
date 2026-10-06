@@ -58,6 +58,7 @@ const clientConfig = {
   timezone: config.timezone,
   thresholds: config.thresholds,
   people: config.people.map(({ name, color }) => ({ name, color })),
+  maxEvents: config.calendar.maxEvents,
   hosts: config.hosts.map(({ name }) => name),
   sensors: config.xiaomi.sensors.map(({ name }) => name),
   globe: { textureSize: config.globe.textureSize, center: config.globe.center },

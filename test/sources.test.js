@@ -223,3 +223,35 @@ describe("Xiaomi", () => {
     expect(parseXiaomiMessage('{"cmd":"read_ack","sid":"158d00034f804c","data":"{\\"error\\":\\"No device\\"}"}').error).toBe("No device"));
   test("message invalide", () => expect(parseXiaomiMessage("pas du json")).toBeNull());
 });
+
+import { Source } from "../server/source.js";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+describe("cache des sources", () => {
+  test("une erreur garde la dernière valeur, avec l'erreur", async () => {
+    let fail = false;
+    const s = new Source("t", async () => {
+      if (fail) throw new Error("hors ligne");
+      return { temp: 11 };
+    }, 1000);
+    await s.tick();
+    fail = true;
+    await s.tick();
+    expect(s.snapshot()).toMatchObject({ data: { temp: 11 }, error: "hors ligne" });
+  });
+  test("la dernière valeur survit à un redémarrage hors ligne", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "miroir-"));
+    const file = join(dir, "x.json");
+    try {
+      await new Source("t", async () => ({ temp: 12 }), 1000, { file }).tick();
+      const offline = new Source("t", async () => { throw new Error("hors ligne"); }, 1000, { file });
+      await offline.tick();
+      expect(offline.snapshot().data).toEqual({ temp: 12 });
+      expect(offline.snapshot().updatedAt).toBeNumber();
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+});

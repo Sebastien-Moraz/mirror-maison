@@ -59,7 +59,7 @@ export function calendarsFetcher(config) {
           const res = await fetchOk(url, { timeout: 30_000 });
           const events = upcomingEvents(await res.text(), {
             daysAhead: config.calendar.daysAhead,
-            max: config.calendar.maxEvents,
+            max: config.calendar.keep ?? 10,
           });
           return { ...base, events };
         } catch (err) {

@@ -155,7 +155,7 @@ function renderAgendas() {
       const events = el("div", "events");
       person.events
         .filter((ev) => eventEndMs(ev, tz) > now.getTime())
-        .slice(0, 3)
+        .slice(0, cfg.maxEvents ?? 3)
         .forEach((ev) => {
           const item = el("div", "event");
           item.append(el("div", "event-when", formatEventWhen(ev, now, tz)), el("div", "event-title", ev.title));

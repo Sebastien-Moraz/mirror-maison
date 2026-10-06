@@ -52,7 +52,9 @@ function safe(fn) {
 function renderClock(now) {
   const p = zonedParts(now, tz);
   $("date").textContent = headerDate(now, tz);
-  $("hm").textContent = hhmm(p);
+  const hm = hhmm(p);
+  $("hm").textContent = hm;
+  $("hm").dataset.lead = hm[0];
   $("sec").textContent = pad2(p.second);
 }
 

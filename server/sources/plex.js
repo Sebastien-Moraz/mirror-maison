@@ -5,31 +5,9 @@ const RESOLUTIONS = { "4k": "4K", sd: "SD" };
 export const resolutionLabel = (r) => (r ? (RESOLUTIONS[String(r).toLowerCase()] ?? (/^\d+$/.test(r) ? `${r}p` : r)) : "");
 const imageUrl = (path, w, h) => (path ? `/api/plex/image?path=${encodeURIComponent(path)}&w=${w}&h=${h}` : null);
 
-/**
- * Réponse /status/sessions → session à afficher (ou null).
- * `activity` (Map sessionKey → { sig, at }) mémorise le dernier changement de chaque session
- * pour choisir la plus récemment active.
- */
-export function pickSession(json, activity, now = Date.now()) {
-  const items = (json?.MediaContainer?.Metadata ?? []).filter((m) =>
-    ["playing", "paused", "buffering"].includes(m.Player?.state),
-  );
-  const seen = new Set();
-  for (const m of items) {
-    const key = String(m.sessionKey ?? m.Session?.id ?? m.ratingKey);
-    seen.add(key);
-    const sig = `${m.viewOffset}|${m.Player?.state}`;
-    const prev = activity.get(key);
-    if (!prev || prev.sig !== sig) activity.set(key, { sig, at: now });
-  }
-  for (const key of activity.keys()) if (!seen.has(key)) activity.delete(key);
-  if (!items.length) return null;
+const keyOf = (m) => String(m.sessionKey ?? m.Session?.id ?? m.ratingKey);
 
-  const keyOf = (m) => String(m.sessionKey ?? m.Session?.id ?? m.ratingKey);
-  const m = items
-    .slice()
-    .sort((a, b) => activity.get(keyOf(b)).at - activity.get(keyOf(a)).at || (a.Player?.state === "playing" ? -1 : 1))[0];
-
+function toSession(m) {
   const episode = m.type === "episode";
   const media = m.Media?.[0] ?? {};
   return {
@@ -46,6 +24,36 @@ export function pickSession(json, activity, now = Date.now()) {
     mode: m.TranscodeSession ? "Transcodage" : "Lecture directe",
     quality: resolutionLabel(media.videoResolution),
   };
+}
+
+/**
+ * Réponse /status/sessions → sessions à afficher (lecture ou pause), au plus `max`.
+ * `activity` (Map sessionKey → { sig, at, first }) mémorise le début et le dernier changement
+ * de chaque session : on garde les plus récemment actives, affichées dans l'ordre de démarrage
+ * pour que les cartes ne changent pas de place.
+ */
+export function pickSessions(json, activity, now = Date.now(), max = 3) {
+  const items = (json?.MediaContainer?.Metadata ?? []).filter((m) =>
+    ["playing", "paused", "buffering"].includes(m.Player?.state),
+  );
+  const seen = new Set();
+  for (const m of items) {
+    const key = keyOf(m);
+    seen.add(key);
+    const sig = `${m.viewOffset}|${m.Player?.state}`;
+    const prev = activity.get(key);
+    if (!prev) activity.set(key, { sig, at: now, first: now });
+    else if (prev.sig !== sig) activity.set(key, { ...prev, sig, at: now });
+  }
+  for (const key of activity.keys()) if (!seen.has(key)) activity.delete(key);
+
+  const act = (m) => activity.get(keyOf(m));
+  return items
+    .slice()
+    .sort((a, b) => act(b).at - act(a).at)
+    .slice(0, max)
+    .sort((a, b) => act(a).first - act(b).first || keyOf(a).localeCompare(keyOf(b)))
+    .map(toSession);
 }
 
 export function createPlex(config) {
@@ -66,12 +74,12 @@ export function createPlex(config) {
     "plex",
     async () => {
       try {
-        const session = pickSession(await fetchSessions(), activity);
+        const sessions = pickSessions(await fetchSessions(), activity, Date.now(), config.plex?.maxSessions ?? 3);
         failures = 0;
-        return session;
+        return sessions;
       } catch (err) {
         // Plex injoignable plus de ~10 s : on masque le bloc plutôt que figer une lecture fantôme.
-        if (++failures >= 5) source.value = null;
+        if (++failures >= 5) source.value = [];
         throw err;
       }
     },

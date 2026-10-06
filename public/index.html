@@ -37,27 +37,30 @@
 
     <section class="agendas" id="agendas"></section>
 
-    <section class="plex" id="plex" hidden>
-      <div class="plex-cover"><img id="plex-cover" alt=""></div>
+    <section class="plex-list" id="plex"></section>
+  </main>
+  <template id="plex-card">
+    <div class="plex">
+      <div class="plex-cover"><img alt=""></div>
       <div class="plex-body">
         <div class="plex-line1">
-          <span class="plex-state" id="plex-state"></span>
-          <span class="plex-title" id="plex-title"></span>
-          <span class="plex-time" id="plex-time"></span>
+          <span class="plex-state"></span>
+          <span class="plex-title"></span>
+          <span class="plex-time"></span>
         </div>
-        <div class="plex-sub" id="plex-sub"></div>
+        <div class="plex-sub"></div>
         <div class="plex-meta">
-          <span class="plex-avatar" id="plex-avatar"><span id="plex-initial"></span><img id="plex-avatar-img" alt="" hidden></span>
-          <span class="plex-user" id="plex-user"></span>
+          <span class="plex-avatar"><span class="plex-initial"></span><img alt="" hidden></span>
+          <span class="plex-user"></span>
           <span class="sep">·</span>
-          <span class="plex-loc" id="plex-loc"></span>
+          <span class="plex-loc"></span>
           <span class="sep">·</span>
-          <span id="plex-mode"></span>
+          <span class="plex-mode"></span>
         </div>
-        <div class="plex-bar"><div class="plex-fill" id="plex-fill"></div></div>
+        <div class="plex-bar"><div class="plex-fill"></div></div>
       </div>
-    </section>
-  </main>
+    </div>
+  </template>
   <script type="module" src="/js/main.js"></script>
 </body>
 </html>

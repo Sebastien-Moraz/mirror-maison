@@ -84,24 +84,55 @@ export function sensors() {
   );
 }
 
+// MOCK_PLEX=0..3 : nombre de lectures simulées (1 par défaut, comme la maquette).
 export function plex() {
-  const duration = 26 * 60_000;
-  // La lecture avance réellement, et boucle, pour voir la barre bouger en démo.
-  const viewOffset = (842_000 + Date.now() - startedAt) % duration;
-  return wrap({
-    key: "demo",
-    state: "playing",
-    title: "Frieren",
-    subtitle: "S1 · É2 Magie ou pas, peu importe",
-    viewOffset,
-    duration,
-    user: "Seb",
-    avatar: null,
-    cover: "/api/plex/image?path=demo",
-    location: "lan",
-    mode: "Lecture directe",
-    quality: "1080p",
-  });
+  const count = Math.max(0, Math.min(3, Number(process.env.MOCK_PLEX ?? 1)));
+  const elapsed = Date.now() - startedAt;
+  const sessions = [
+    {
+      key: "demo",
+      state: "playing",
+      title: "Frieren",
+      subtitle: "S1 · É2 Magie ou pas, peu importe",
+      viewOffset: (842_000 + elapsed) % 1_560_000, // la lecture avance réellement, et boucle
+      duration: 1_560_000,
+      user: "Seb",
+      avatar: null,
+      cover: "/api/plex/image?path=demo",
+      location: "lan",
+      mode: "Lecture directe",
+      quality: "1080p",
+    },
+    {
+      key: "demo2",
+      state: "paused",
+      title: "Dune : Deuxième partie",
+      subtitle: "2024",
+      viewOffset: 3_725_000,
+      duration: 9_960_000,
+      user: "Chloé",
+      avatar: null,
+      cover: "/api/plex/image?path=demo",
+      location: "wan",
+      mode: "Transcodage",
+      quality: "4K",
+    },
+    {
+      key: "demo3",
+      state: "playing",
+      title: "Bluey",
+      subtitle: "S3 · É12 Le marché",
+      viewOffset: (120_000 + elapsed) % 420_000,
+      duration: 420_000,
+      user: "Véro",
+      avatar: null,
+      cover: "/api/plex/image?path=demo",
+      location: "lan",
+      mode: "Lecture directe",
+      quality: "720p",
+    },
+  ];
+  return wrap(sessions.slice(0, count));
 }
 
 export function plexImage() {

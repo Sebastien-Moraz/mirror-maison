@@ -167,55 +167,84 @@ function renderAgendas() {
   );
 }
 
-// --- Plex
-let anchor = null;
-const plexShown = { cover: null, avatar: null, state: null };
+// --- Plex : une carte par lecture en cours, réutilisée tant que la session dure
+const plexCards = new Map(); // key → { root, parts, anchor, shown }
+const plexTemplate = $("plex-card").content.firstElementChild;
 
-function onPlexData() {
-  const s = state.plex;
-  anchor = s ? nextAnchor(anchor, s, Date.now()) : null;
-  renderPlex();
+function createPlexCard() {
+  const root = plexTemplate.cloneNode(true);
+  const q = (sel) => root.querySelector(sel);
+  const parts = {
+    cover: q(".plex-cover img"),
+    state: q(".plex-state"),
+    title: q(".plex-title"),
+    time: q(".plex-time"),
+    sub: q(".plex-sub"),
+    initial: q(".plex-initial"),
+    avatar: q(".plex-avatar img"),
+    user: q(".plex-user"),
+    loc: q(".plex-loc"),
+    mode: q(".plex-mode"),
+    fill: q(".plex-fill"),
+  };
+  parts.cover.addEventListener("error", () => (parts.cover.hidden = true));
+  parts.avatar.addEventListener("error", () => (parts.avatar.hidden = true));
+  return { root, parts, anchor: null, shown: {} };
 }
 
-function renderPlex() {
-  const s = state.plex;
-  $("plex").hidden = !s;
-  if (!s) return;
-  if (plexShown.state !== s.state) {
-    $("plex-state").innerHTML = s.state === "paused" ? pauseIcon : playIcon;
-    plexShown.state = s.state;
+function onPlexData() {
+  const sessions = Array.isArray(state.plex) ? state.plex : state.plex ? [state.plex] : [];
+  const now = Date.now();
+  const keys = new Set(sessions.map((s) => s.key));
+  for (const [key, card] of plexCards) if (!keys.has(key)) plexCards.delete(key) && card.root.remove();
+  for (const s of sessions) {
+    let card = plexCards.get(s.key);
+    if (!card) plexCards.set(s.key, (card = createPlexCard()));
+    card.anchor = nextAnchor(card.anchor, s, now);
+    card.session = s;
   }
-  $("plex-title").textContent = s.title;
-  $("plex-sub").textContent = s.subtitle ?? "";
-  if (plexShown.cover !== s.cover) {
-    $("plex-cover").src = s.cover ?? "";
-    $("plex-cover").hidden = !s.cover;
-    plexShown.cover = s.cover;
+  const list = $("plex");
+  const compact = sessions.length > 2;
+  sessions.forEach((s, i) => {
+    const card = plexCards.get(s.key);
+    card.root.classList.toggle("compact", compact);
+    if (list.children[i] !== card.root) list.insertBefore(card.root, list.children[i] ?? null);
+    safe(() => renderPlexCard(card));
+  });
+}
+
+function renderPlexCard({ session: s, parts: p, shown }) {
+  if (shown.state !== s.state) p.state.innerHTML = s.state === "paused" ? pauseIcon : playIcon;
+  p.title.textContent = s.title;
+  p.sub.textContent = s.subtitle ?? "";
+  if (shown.cover !== s.cover) {
+    p.cover.hidden = !s.cover;
+    if (s.cover) p.cover.src = s.cover;
   }
-  $("plex-user").textContent = s.user ?? "";
-  $("plex-initial").textContent = (s.user ?? "?").slice(0, 1).toUpperCase();
-  if (plexShown.avatar !== s.avatar) {
-    const img = $("plex-avatar-img");
-    img.hidden = !s.avatar;
-    if (s.avatar) img.src = s.avatar;
-    plexShown.avatar = s.avatar;
+  p.user.textContent = s.user ?? "";
+  p.initial.textContent = (s.user || "?").slice(0, 1).toUpperCase();
+  if (shown.avatar !== s.avatar) {
+    p.avatar.hidden = !s.avatar;
+    if (s.avatar) p.avatar.src = s.avatar;
   }
-  const loc = $("plex-loc");
   const lan = s.location !== "wan";
-  loc.className = `plex-loc ${lan ? "lan" : "wan"}`;
-  loc.innerHTML = `${lan ? homeIcon : globeIcon}<span>${lan ? "Local" : "Distant"}</span>`;
-  $("plex-mode").textContent = [s.mode, s.quality].filter(Boolean).join(" · ");
+  if (shown.lan !== lan) {
+    p.loc.className = `plex-loc ${lan ? "lan" : "wan"}`;
+    p.loc.innerHTML = `${lan ? homeIcon : globeIcon}<span>${lan ? "Local" : "Distant"}</span>`;
+  }
+  p.mode.textContent = [s.mode, s.quality].filter(Boolean).join(" · ");
+  Object.assign(shown, { state: s.state, cover: s.cover, avatar: s.avatar, lan });
   renderPlexProgress();
 }
 
 function renderPlexProgress() {
-  if (!anchor || !state.plex) return;
-  const pos = interpolateOffset(anchor, Date.now());
-  $("plex-time").textContent = `${formatDuration(pos)} / ${formatDuration(anchor.duration)}`;
-  $("plex-fill").style.width = `${anchor.duration ? (100 * pos) / anchor.duration : 0}%`;
+  const now = Date.now();
+  for (const { anchor, parts } of plexCards.values()) {
+    const pos = interpolateOffset(anchor, now);
+    parts.time.textContent = `${formatDuration(pos)} / ${formatDuration(anchor.duration)}`;
+    parts.fill.style.width = `${anchor.duration ? (100 * pos) / anchor.duration : 0}%`;
+  }
 }
-$("plex-avatar-img").addEventListener("error", (e) => (e.target.hidden = true));
-$("plex-cover").addEventListener("error", (e) => (e.target.hidden = true));
 
 // --- Rechargements : chaque nuit à 04:00 et à chaque nouvelle version du serveur
 const loadedAt = Date.now();

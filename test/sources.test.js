@@ -85,7 +85,7 @@ describe("agendas ICS", () => {
   });
 });
 
-import { pickSession, resolutionLabel } from "../server/sources/plex.js";
+import { pickSessions, resolutionLabel } from "../server/sources/plex.js";
 import { nextHostState } from "../server/sources/hosts.js";
 import { parseXiaomiMessage } from "../server/sources/xiaomi.js";
 
@@ -121,35 +121,54 @@ describe("Plex", () => {
   };
   const wrap = (...m) => ({ MediaContainer: { size: m.length, Metadata: m } });
 
-  test("aucune session", () => expect(pickSession({ MediaContainer: { size: 0 } }, new Map())).toBeNull());
+  const playing = (m, viewOffset) => ({ ...m, viewOffset, Player: { state: "playing" } });
+
+  test("aucune session", () => expect(pickSessions({ MediaContainer: { size: 0 } }, new Map())).toEqual([]));
   test("épisode", () =>
-    expect(pickSession(wrap(ep), new Map(), 0)).toEqual({
-      key: "12",
-      state: "playing",
-      title: "Frieren",
-      subtitle: "S1 · É2 Magie ou pas, peu importe",
-      viewOffset: 842000,
-      duration: 1560000,
-      user: "Seb",
-      avatar: "/api/plex/image?path=https%3A%2F%2Fplex.tv%2Fusers%2Fabc%2Favatar%3Fc%3D1&w=52&h=52",
-      cover: "/api/plex/image?path=%2Flibrary%2Fmetadata%2F5%2Fthumb%2F1&w=136&h=200",
-      location: "lan",
-      mode: "Lecture directe",
-      quality: "1080p",
-    }));
+    expect(pickSessions(wrap(ep), new Map(), 0)).toEqual([
+      {
+        key: "12",
+        state: "playing",
+        title: "Frieren",
+        subtitle: "S1 · É2 Magie ou pas, peu importe",
+        viewOffset: 842000,
+        duration: 1560000,
+        user: "Seb",
+        avatar: "/api/plex/image?path=https%3A%2F%2Fplex.tv%2Fusers%2Fabc%2Favatar%3Fc%3D1&w=52&h=52",
+        cover: "/api/plex/image?path=%2Flibrary%2Fmetadata%2F5%2Fthumb%2F1&w=136&h=200",
+        location: "lan",
+        mode: "Lecture directe",
+        quality: "1080p",
+      },
+    ]));
   test("film en pause, distant, transcodé, 4K", () => {
-    const s = pickSession(wrap(movie), new Map(), 0);
+    const [s] = pickSessions(wrap(movie), new Map(), 0);
     expect([s.title, s.subtitle, s.state, s.location, s.mode, s.quality, s.avatar]).toEqual([
       "Dune", "2021", "paused", "wan", "Transcodage", "4K", null,
     ]);
   });
-  test("plusieurs sessions : la plus récemment active", () => {
+  test("plusieurs sessions : toutes affichées, dans l'ordre de démarrage", () => {
     const activity = new Map();
-    pickSession(wrap(ep, movie), activity, 0);
-    // Seul le film change ensuite : il devient la session la plus active.
-    expect(pickSession(wrap(ep, { ...movie, viewOffset: 20, Player: { state: "playing" } }), activity, 5000).key).toBe("13");
-    // Puis l'épisode avance à son tour.
-    expect(pickSession(wrap({ ...ep, viewOffset: 852000 }, { ...movie, viewOffset: 20, Player: { state: "playing" } }), activity, 9000).key).toBe("12");
+    expect(pickSessions(wrap(ep), activity, 0).map((s) => s.key)).toEqual(["12"]);
+    // Le film démarre ensuite et avance : il reste sous l'épisode, l'ordre ne bouge pas.
+    expect(pickSessions(wrap(ep, movie), activity, 2000).map((s) => s.key)).toEqual(["12", "13"]);
+    expect(pickSessions(wrap(movie, playing(ep, 852000)), activity, 4000).map((s) => s.key)).toEqual(["12", "13"]);
+  });
+  test("au-delà du maximum : les plus récemment actives", () => {
+    const activity = new Map();
+    const a = { ...ep, sessionKey: "1" };
+    const b = { ...ep, sessionKey: "2" };
+    const c = { ...ep, sessionKey: "3" };
+    pickSessions(wrap(a, b, c), activity, 0, 2);
+    // Seules b et c avancent ensuite : a, inactive, est écartée.
+    const keys = pickSessions(wrap(a, playing(b, 1), playing(c, 1)), activity, 5000, 2).map((s) => s.key);
+    expect(keys).toEqual(["2", "3"]);
+  });
+  test("une session terminée disparaît", () => {
+    const activity = new Map();
+    pickSessions(wrap(ep, movie), activity, 0);
+    expect(pickSessions(wrap(movie), activity, 2000).map((s) => s.key)).toEqual(["13"]);
+    expect(activity.has("12")).toBe(false);
   });
   test("résolutions", () => {
     expect(resolutionLabel("720")).toBe("720p");

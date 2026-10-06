@@ -64,6 +64,8 @@ export default {
   ],
   calendar: { maxEvents: 3, daysAhead: 60 },
 
+  plex: { maxSessions: 3 }, // au-delà de 2, les cartes passent en format compact
+
   alert: {
     url: "https://my.wetteralarm.ch/v6/alarms/meteo/with-regions.json",
     region: "VD Jura", // nom_de de la région chez Wetteralarm

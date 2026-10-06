@@ -105,7 +105,9 @@ svg { display: block; }
 .event-title { font-size: 21px; line-height: 1.2; margin-top: 3px; overflow-wrap: anywhere; }
 
 /* 6. Plex */
-.plex { margin-top: auto; display: flex; gap: 22px; border: 1px solid var(--line); border-radius: 16px; padding: 18px 22px; }
+.plex-list { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
+.plex-list:empty { display: none; }
+.plex { display: flex; gap: 22px; border: 1px solid var(--line); border-radius: 16px; padding: 18px 22px; }
 .plex-cover { width: 68px; height: 100px; flex: none; border-radius: 6px; overflow: hidden; background: #1d2521; }
 .plex-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .plex-body { flex: 1; min-width: 0; height: 100px; display: flex; flex-direction: column; justify-content: space-between; }
@@ -124,3 +126,15 @@ svg { display: block; }
 .plex-loc.wan { color: var(--amber); }
 .plex-bar { height: 3px; background: #1c1c1c; border-radius: 2px; overflow: hidden; }
 .plex-fill { height: 100%; background: var(--green); width: 0; }
+
+/* 3 lectures simultanées : cartes compactes pour tenir sous les agendas */
+.plex.compact { padding: 12px 22px; gap: 18px; }
+.plex.compact .plex-cover { width: 48px; height: 70px; border-radius: 5px; }
+.plex.compact .plex-body { height: 70px; }
+.plex.compact .plex-state { width: 12px; height: 12px; margin-right: 10px; }
+.plex.compact .plex-title { font-size: 20px; }
+.plex.compact .plex-time { font-size: 15px; }
+.plex.compact .plex-sub { font-size: 15px; }
+.plex.compact .plex-meta { font-size: 14px; gap: 8px; }
+.plex.compact .plex-avatar { width: 18px; height: 18px; font-size: 10px; }
+.plex.compact .plex-loc svg { width: 12px; height: 12px; }

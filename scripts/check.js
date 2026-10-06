@@ -4,7 +4,7 @@ import config from "../config.js";
 import { weatherFetcher } from "../server/sources/weather.js";
 import { alertFetcher, pickAlert } from "../server/sources/alert.js";
 import { upcomingEvents } from "../server/sources/calendars.js";
-import { createPlex, pickSession } from "../server/sources/plex.js";
+import { createPlex, pickSessions } from "../server/sources/plex.js";
 import { ping } from "../server/sources/hosts.js";
 import { createXiaomi, parseXiaomiMessage } from "../server/sources/xiaomi.js";
 import { createClouds } from "../server/sources/clouds.js";
@@ -73,7 +73,7 @@ const checks = {
       );
     }
     console.log("\nCe qui sera affiché :");
-    show(pickSession(json, new Map()));
+    show(pickSessions(json, new Map()));
   },
 
   async ping() {

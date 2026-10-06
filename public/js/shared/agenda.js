@@ -18,9 +18,42 @@ function shiftDays(dateOnly, days) {
   return d.toISOString().slice(0, 10);
 }
 
+/** « le jeu. 8 », ou « le 24.11 » au-delà de 30 jours. */
+function onDay(parts, today) {
+  const diff = dayNumber(parts) - today;
+  if (Math.abs(diff) < 30) return `le ${WEEKDAYS_SHORT[parts.weekday].toLowerCase()} ${parts.day}`;
+  return `le ${pad2(parts.day)}.${pad2(parts.month)}`;
+}
+
+/** Événement en cours : « Se termine dans 45 min », « Se termine à 18:30 », « Se termine demain à 10:00 »… */
+function formatEnding(ev, now, tz, today) {
+  if (ev.allDay) {
+    const last = parseDateOnly(shiftDays(ev.end ?? shiftDays(ev.start, 1), -1));
+    const diff = dayNumber(last) - today;
+    if (diff <= 0) return "Se termine ce soir";
+    if (diff === 1) return "Se termine demain";
+    return `Se termine ${onDay(last, today)}`;
+  }
+  const endMs = new Date(ev.end).getTime();
+  const minutes = Math.max(1, Math.ceil((endMs - now.getTime()) / 60_000));
+  if (minutes < 60) return `Se termine dans ${minutes} min`;
+  const e = zonedParts(new Date(endMs), tz);
+  const diff = dayNumber(e) - today;
+  if (e.hour === 0 && e.minute === 0 && diff === 1) return "Se termine à minuit";
+  if (diff === 0) return `Se termine à ${hhmm(e)}`;
+  if (diff === 1) return `Se termine demain à ${hhmm(e)}`;
+  if (Math.abs(diff) < 30) return `Se termine ${onDay(e, today)} à ${hhmm(e)}`;
+  return `Se termine ${onDay(e, today)}`;
+}
+
 /** Ligne de date d'un événement d'agenda, relative à `now`. */
 export function formatEventWhen(ev, now, tz) {
   const today = dayNumber(zonedParts(now, tz));
+  const startMs = ev.allDay ? zonedMidnightMs(ev.start, tz) : new Date(ev.start).getTime();
+  const ongoing = startMs <= now.getTime() && now.getTime() < eventEndMs(ev, tz);
+  // Une seule journée entière, aujourd'hui : « Aujourd'hui · journée » reste plus naturel.
+  const singleDay = ev.allDay && shiftDays(ev.start, 1) === (ev.end ?? shiftDays(ev.start, 1));
+  if (ongoing && !singleDay) return formatEnding(ev, now, tz, today);
 
   if (ev.allDay) {
     const first = parseDateOnly(ev.start);

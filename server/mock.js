@@ -76,7 +76,11 @@ export function calendars() {
       timed("Gym", 10, "16:30", "21:30"),
       timed("C1", 15, "18:15", "19:45"),
     ],
-    Seb: [timed("ORP Sentier", 15, "08:45", "09:45")],
+    Seb: [
+      // Un événement en cours, pour montrer « Se termine dans … »
+      { title: "Réunion", allDay: false, start: iso(Date.now() - 60 * 60_000), end: iso(Date.now() + 40 * 60_000) },
+      timed("ORP Sentier", 15, "08:45", "09:45"),
+    ],
   };
   return wrap(config.people.map((p) => ({ name: p.name, color: p.color, events: events[p.name] ?? [] })));
 }

@@ -73,7 +73,7 @@ describe("agendas ICS", () => {
 
   test("récurrence, EXDATE, occurrence modifiée, journée, en cours, changement d'heure", () => {
     expect(lines({ daysAhead: 30 })).toEqual([
-      "Lun. 5 – Ven. 9 Vacances", // en cours : reste affiché jusqu'à sa fin
+      "Se termine le ven. 9 Vacances", // en cours : reste affiché jusqu'à sa fin
       "Demain · 18:15–19:45 C1",
       // 14 octobre exclu (EXDATE)
       "Dim. 18 · journée Anniversaire Chloé",

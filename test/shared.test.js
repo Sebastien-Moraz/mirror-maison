@@ -225,3 +225,40 @@ describe("couleur des températures", () => {
   });
   test("interpolation entre deux paliers", () => expect(tempColor(18)).toBe("#e8bf9e"));
 });
+
+describe("événement en cours", () => {
+  const timed = (s, e) => ({ allDay: false, start: s, end: e });
+  const at = (iso) => new Date(iso);
+  const ev = timed("2026-10-06T08:30:00+02:00", "2026-10-06T18:30:00+02:00");
+  test("moins d'une heure", () =>
+    expect(formatEventWhen(ev, at("2026-10-06T17:45:00+02:00"), TZ)).toBe("Se termine dans 45 min"));
+  test("dernière minute", () =>
+    expect(formatEventWhen(ev, at("2026-10-06T18:29:30+02:00"), TZ)).toBe("Se termine dans 1 min"));
+  test("plus tard aujourd'hui", () =>
+    expect(formatEventWhen(ev, at("2026-10-06T10:00:00+02:00"), TZ)).toBe("Se termine à 18:30"));
+  test("à minuit", () =>
+    expect(formatEventWhen(timed("2026-10-06T20:00:00+02:00", "2026-10-07T00:00:00+02:00"), at("2026-10-06T21:00:00+02:00"), TZ)).toBe(
+      "Se termine à minuit",
+    ));
+  test("demain", () =>
+    expect(formatEventWhen(timed("2026-10-06T20:00:00+02:00", "2026-10-07T10:00:00+02:00"), NOW, TZ)).toBe(
+      "Se termine demain à 10:00",
+    ));
+  test("dans quelques jours", () =>
+    expect(formatEventWhen(timed("2026-10-05T09:00:00+02:00", "2026-10-08T17:00:00+02:00"), NOW, TZ)).toBe(
+      "Se termine le jeu. 8 à 17:00",
+    ));
+  test("au-delà de 30 jours", () =>
+    expect(formatEventWhen(timed("2026-10-01T09:00:00+02:00", "2026-11-24T17:00:00+01:00"), NOW, TZ)).toBe(
+      "Se termine le 24.11",
+    ));
+  test("plusieurs jours entiers", () => {
+    expect(formatEventWhen({ allDay: true, start: "2026-10-05", end: "2026-10-07" }, NOW, TZ)).toBe("Se termine ce soir");
+    expect(formatEventWhen({ allDay: true, start: "2026-10-05", end: "2026-10-08" }, NOW, TZ)).toBe("Se termine demain");
+    expect(formatEventWhen({ allDay: true, start: "2026-10-05", end: "2026-10-12" }, NOW, TZ)).toBe("Se termine le dim. 11");
+  });
+  test("une seule journée entière aujourd'hui reste « journée »", () =>
+    expect(formatEventWhen({ allDay: true, start: "2026-10-06", end: "2026-10-07" }, NOW, TZ)).toBe("Aujourd'hui · journée"));
+  test("pas encore commencé : format habituel", () =>
+    expect(formatEventWhen(ev, at("2026-10-06T07:00:00+02:00"), TZ)).toBe("Aujourd'hui · 08:30–18:30"));
+});

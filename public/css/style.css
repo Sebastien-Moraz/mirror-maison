@@ -138,3 +138,7 @@ svg { display: block; }
 .plex.compact .plex-meta { font-size: 14px; gap: 8px; }
 .plex.compact .plex-avatar { width: 18px; height: 18px; font-size: 10px; }
 .plex.compact .plex-loc svg { width: 12px; height: 12px; }
+
+/* Sans lecture Plex : l'espace libre est réparti à parts égales entre les blocs
+   (l'alerte reste collée à l'en-tête), les agendas descendent en bas de l'écran. */
+.screen:has(.plex-list:empty) > :is(.forecast, .middle, .agendas) { margin-top: auto; }

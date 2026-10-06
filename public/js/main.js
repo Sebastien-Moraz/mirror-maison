@@ -213,20 +213,22 @@ function onPlexData() {
 }
 
 // La place sous les agendas varie (alerte, titres sur deux lignes) : on mesure plutôt que deviner.
-// Cartes normales si elles tiennent, sinon compactes, sinon on masque les plus anciennes.
+// Pour n cartes (de toutes à une), on essaie le format normal puis le compact ; les cartes
+// écartées sont les plus anciennes.
 function fitPlex() {
   const screen = document.querySelector(".screen");
-  const overflows = () => screen.scrollHeight > screen.clientHeight;
   const cards = [...$("plex").children];
-  for (const c of cards) {
-    c.hidden = false;
-    c.classList.remove("compact");
-  }
-  if (!overflows()) return;
-  for (const c of cards) c.classList.add("compact");
-  for (const c of cards.slice(0, -1)) {
-    if (!overflows()) break;
-    c.hidden = true;
+  const fits = () => screen.scrollHeight <= screen.clientHeight;
+  const layout = (n, compact) =>
+    cards.forEach((c, i) => {
+      c.hidden = i < cards.length - n;
+      c.classList.toggle("compact", compact);
+    });
+  for (let n = cards.length; n >= 1; n--) {
+    for (const compact of [false, true]) {
+      layout(n, compact);
+      if (fits()) return;
+    }
   }
 }
 

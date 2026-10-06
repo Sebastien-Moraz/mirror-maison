@@ -12,7 +12,7 @@ export function weatherUrl({ latitude, longitude }, tz) {
     forecast_days: 7,
     current: "temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m,wind_direction_10m,relative_humidity_2m",
     daily: "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset",
-    hourly: "precipitation_probability,precipitation",
+    hourly: "temperature_2m,weather_code,is_day,precipitation_probability,precipitation",
   });
   return `https://api.open-meteo.com/v1/forecast?${params}`;
 }
@@ -38,7 +38,14 @@ export function parseWeather(json, tz, now = Date.now()) {
   const todayEntry = daily.find((x) => x.date === today) ?? daily[0];
   const h = json.hourly;
   const hourly = h.time
-    .map((t, i) => ({ time: t * 1000, probability: h.precipitation_probability[i], precipitation: h.precipitation[i] }))
+    .map((t, i) => ({
+      time: t * 1000,
+      temperature: h.temperature_2m?.[i],
+      code: h.weather_code?.[i],
+      isDay: h.is_day?.[i] === 1,
+      probability: h.precipitation_probability[i],
+      precipitation: h.precipitation[i],
+    }))
     .filter((x) => x.time + 3_600_000 > now)
     .slice(0, 24);
 

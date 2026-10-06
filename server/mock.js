@@ -21,8 +21,13 @@ export function weather() {
   const hourStart = Math.floor(Date.now() / 3_600_000) * 3_600_000;
   const hourly = Array.from({ length: 24 }, (_, i) => {
     const time = hourStart + i * 3_600_000;
-    const rainy = [2, 3, 4].includes(zonedParts(new Date(time), tz).hour);
-    return { time, probability: rainy ? 75 : 10, precipitation: rainy ? 0.8 : 0 };
+    const hour = zonedParts(new Date(time), tz).hour;
+    const rainy = [2, 3, 4].includes(hour);
+    // Courbe journalière : minimum vers 6 h (7°), maximum vers 15 h (19°)
+    const temperature = Math.round((13 - 6 * Math.cos(((hour - 3) / 24) * 2 * Math.PI)) * 10) / 10;
+    const isDay = hour >= 8 && hour < 19;
+    const code = rainy ? 61 : hour === 1 || hour === 5 ? 3 : isDay && hour > 12 ? 2 : 0;
+    return { time, temperature, code, isDay, probability: rainy ? 75 : hour === 5 ? 30 : 10, precipitation: rainy ? 0.8 : 0 };
   });
   return wrap({
     current: {
@@ -53,12 +58,24 @@ export function alert() {
 export function calendars() {
   const timed = (title, d, s, e) => ({ title, allDay: false, start: iso(at(d, s)), end: iso(at(d, e)) });
   const events = {
-    Lionel: [timed("obi", 1, "08:30", "18:30"), timed("obi", 2, "08:30", "18:30"), timed("obi", 4, "07:45", "17:00")],
+    Lionel: [
+      timed("obi", 1, "08:30", "18:30"),
+      timed("obi", 2, "08:30", "18:30"),
+      timed("obi", 4, "07:45", "17:00"),
+      timed("obi", 6, "09:30", "19:00"),
+      timed("obi", 8, "09:30", "19:00"),
+    ],
     Véro: [
       timed("Dentiste", 9, "11:15", "12:00"),
       { title: "Anniversaire Chloé", allDay: true, start: dateOnly(12), end: dateOnly(13) },
     ],
-    Chloé: [timed("C1", 1, "18:15", "19:45"), timed("Gym", 3, "16:30", "21:30"), timed("C1", 8, "18:15", "19:45")],
+    Chloé: [
+      timed("C1", 1, "18:15", "19:45"),
+      timed("Gym", 3, "16:30", "21:30"),
+      timed("C1", 8, "18:15", "19:45"),
+      timed("Gym", 10, "16:30", "21:30"),
+      timed("C1", 15, "18:15", "19:45"),
+    ],
     Seb: [timed("ORP Sentier", 15, "08:45", "09:45")],
   };
   return wrap(config.people.map((p) => ({ name: p.name, color: p.color, events: events[p.name] ?? [] })));

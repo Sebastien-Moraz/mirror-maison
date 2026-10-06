@@ -91,6 +91,7 @@ function renderWeather() {
   $("rain").textContent = rain ?? "";
   $("rain").hidden = !rain;
   $("now").hidden = false;
+  renderHourly();
 
   const today = dayNumber(zonedParts(now, tz));
   const days = w.daily.filter((d) => dayNumber(parseDateOnly(d.date)) >= today).slice(0, 5);
@@ -108,6 +109,60 @@ function renderWeather() {
       return box;
     }),
   );
+}
+
+// --- Bandeau des 12 prochaines heures (affiché seulement quand la place le permet, voir fitLayout)
+const SVG_NS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, attrs, text) => {
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text != null) e.textContent = text;
+  return e;
+};
+
+function renderHourly() {
+  const w = state.weather;
+  const hours = (w?.hourly ?? []).filter((h) => h.time + 3_600_000 > Date.now() && h.temperature != null).slice(0, 12);
+  const box = $("hourly");
+  box.dataset.available = hours.length === 12 ? "1" : "";
+  if (hours.length < 12) return box.replaceChildren();
+
+  const head = el("div", "hourly-row");
+  for (const [i, h] of hours.entries()) {
+    const col = el("div");
+    col.style.display = "flex";
+    col.style.flexDirection = "column";
+    col.style.alignItems = "center";
+    const label = el("div", `hourly-label${i === 0 ? " now" : ""}`, `${pad2(zonedParts(new Date(h.time), tz).hour)}h`);
+    const icon = el("div", "hourly-icon");
+    icon.innerHTML = weatherIcon(h.code, h.isDay);
+    col.append(label, icon);
+    head.append(col);
+  }
+
+  // Courbe de température : une seule série, valeurs écrites au-dessus de chaque point.
+  const W = 952, H = 84, top = 34, bottom = 76;
+  const temps = hours.map((h) => h.temperature);
+  const min = Math.min(...temps), max = Math.max(...temps);
+  const y = (t) => (max === min ? (top + bottom) / 2 : bottom - ((t - min) / (max - min)) * (bottom - top));
+  const x = (i) => ((i + 0.5) * W) / hours.length;
+  const svg = svgEl("svg", { class: "hourly-curve", viewBox: `0 0 ${W} ${H}`, "aria-label": "Température des 12 prochaines heures" });
+  svg.append(svgEl("polyline", { class: "line", points: temps.map((t, i) => `${x(i)},${y(t)}`).join(" ") }));
+  temps.forEach((t, i) => {
+    svg.append(svgEl("circle", { class: "dot", cx: x(i), cy: y(t), r: 4 }));
+    svg.append(svgEl("text", { class: "temp", x: x(i), y: y(t) - 13 }, `${Math.round(t)}°`));
+  });
+
+  // Probabilité de pluie, seulement pour les heures qui comptent comme pluvieuses
+  const t = cfg.thresholds;
+  const rainy = hours.map((h) => (h.probability ?? 0) >= t.rainProbability || (h.precipitation ?? 0) >= t.rainMm);
+  const parts = [head, svg];
+  if (rainy.some(Boolean)) {
+    const rain = el("div", "hourly-row");
+    hours.forEach((h, i) => rain.append(el("div", "hourly-rain", rainy[i] ? `${h.probability ?? 0}%` : "")));
+    parts.push(rain);
+  }
+  box.replaceChildren(...parts);
 }
 
 // --- Alerte
@@ -143,7 +198,14 @@ function renderSensors() {
   });
 }
 
-// --- Agendas
+// --- Agendas : 3 événements, davantage quand la place le permet (voir fitLayout)
+let agendaMax = cfg.maxEvents ?? 3;
+function setAgendaMax(n) {
+  if (n === agendaMax) return;
+  agendaMax = n;
+  renderAgendas();
+}
+
 function renderAgendas() {
   const now = new Date();
   const list = state.calendars ?? cfg.people.map((p) => ({ ...p, events: [] }));
@@ -155,7 +217,7 @@ function renderAgendas() {
       const events = el("div", "events");
       person.events
         .filter((ev) => eventEndMs(ev, tz) > now.getTime())
-        .slice(0, cfg.maxEvents ?? 3)
+        .slice(0, agendaMax)
         .forEach((ev) => {
           const item = el("div", "event");
           item.append(el("div", "event-when", formatEventWhen(ev, now, tz)), el("div", "event-title", ev.title));
@@ -209,7 +271,30 @@ function onPlexData() {
     if (list.children[i] !== card.root) list.insertBefore(card.root, list.children[i] ?? null);
     safe(() => renderPlexCard(card));
   });
-  fitPlex();
+  fitLayout();
+}
+
+// Mise en page selon la place réelle (alerte, titres sur deux lignes, lectures Plex) : on mesure.
+//  - lecture(s) Plex : mise en page de la maquette, cartes ajustées par fitPlex ;
+//  - aucune lecture : bandeau horaire et jusqu'à 5 événements par agenda, tant que ça tient.
+const MAX_ROOMY_EVENTS = 5;
+function fitLayout() {
+  const screen = document.querySelector(".screen");
+  const fits = () => screen.scrollHeight <= screen.clientHeight;
+  const roomy = $("plex").children.length === 0;
+  screen.classList.toggle("roomy", roomy);
+  const hourly = $("hourly");
+  if (!roomy) {
+    hourly.hidden = true;
+    setAgendaMax(cfg.maxEvents ?? 3);
+    return fitPlex();
+  }
+  hourly.hidden = !hourly.dataset.available;
+  for (let n = MAX_ROOMY_EVENTS; n >= (cfg.maxEvents ?? 3); n--) {
+    setAgendaMax(n);
+    if (fits()) return;
+  }
+  hourly.hidden = true;
 }
 
 // La place sous les agendas varie (alerte, titres sur deux lignes) : on mesure plutôt que deviner.
@@ -290,7 +375,7 @@ function tick() {
     // Textes relatifs au temps : « Demain », phrase de pluie, capteurs hors ligne…
     safe(renderWeather);
     safe(renderAgendas);
-    safe(fitPlex);
+    safe(fitLayout);
     safe(renderSensors);
     safe(renderAlert);
     if (p.hour === 4 && p.minute === 0 && Date.now() - loadedAt > 5 * 60_000) location.reload();
@@ -299,9 +384,9 @@ function tick() {
 }
 tick();
 
-poll("/api/weather", 60_000, "weather", renderWeather);
-poll("/api/alert", 60_000, "alert", () => (renderAlert(), fitPlex()));
-poll("/api/calendars", 60_000, "calendars", () => (renderAgendas(), fitPlex()));
+poll("/api/weather", 60_000, "weather", () => (renderWeather(), fitLayout()));
+poll("/api/alert", 60_000, "alert", () => (renderAlert(), fitLayout()));
+poll("/api/calendars", 60_000, "calendars", () => (renderAgendas(), fitLayout()));
 poll("/api/hosts", 15_000, "hosts", renderHosts);
 poll("/api/sensors", 30_000, "sensors", renderSensors);
 poll("/api/plex", 2_000, "plex", onPlexData);

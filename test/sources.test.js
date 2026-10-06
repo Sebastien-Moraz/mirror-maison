@@ -9,21 +9,32 @@ import openMeteo from "./fixtures/open-meteo.json";
 const TZ = "Europe/Zurich";
 
 describe("météo", () => {
-  const now = 1791316800 * 1000; // 6 oct 2026 22:00 Zurich
+  const now = openMeteo.current.time * 1000;
   const w = parseWeather(openMeteo, TZ, now);
   test("actuel", () => {
-    expect(w.current.temperature).toBe(10.9);
-    expect(w.current.isDay).toBe(false);
-    expect(w.current.windDirection).toBe(169);
+    expect(w.current.temperature).toBe(openMeteo.current.temperature_2m);
+    expect(w.current.isDay).toBe(openMeteo.current.is_day === 1);
+    expect(w.current.windDirection).toBe(openMeteo.current.wind_direction_10m);
   });
-  test("jours en date locale, arrondis", () => {
-    expect(w.daily[0]).toEqual({ date: "2026-10-06", code: 45, max: 19, min: 7 });
+  test("jours en date locale, températures arrondies", () => {
+    expect(w.daily[0]).toEqual({
+      date: "2026-10-06",
+      code: openMeteo.daily.weather_code[0],
+      max: Math.round(openMeteo.daily.temperature_2m_max[0]),
+      min: Math.round(openMeteo.daily.temperature_2m_min[0]),
+    });
     expect(w.daily[1].date).toBe("2026-10-07");
   });
-  test("soleil du jour", () => expect(w.sun.rise).toBe(1791265193000));
-  test("heures à venir seulement", () => {
+  test("soleil du jour", () => expect(w.sun.rise).toBe(openMeteo.daily.sunrise[0] * 1000));
+  test("heures à venir seulement, avec température, icône et jour/nuit", () => {
     expect(w.hourly[0].time).toBe(now);
     expect(w.hourly).toHaveLength(24);
+    const i = openMeteo.hourly.time.indexOf(openMeteo.current.time);
+    expect(w.hourly[0]).toMatchObject({
+      temperature: openMeteo.hourly.temperature_2m[i],
+      code: openMeteo.hourly.weather_code[i],
+      isDay: openMeteo.hourly.is_day[i] === 1,
+    });
   });
 });
 

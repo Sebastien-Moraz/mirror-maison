@@ -52,7 +52,7 @@ svg { display: block; }
 /* Compense l'approche du premier chiffre pour aligner l'encre sur la date et les serveurs (mesuré sur Space Grotesk 300). */
 .hm[data-lead="0"] { margin-left: -11px; }
 .hm[data-lead="1"] { margin-left: -13px; }
-.sec { font-size: 60px; font-weight: 300; color: #6e6e6e; line-height: 1; margin-top: 19px; margin-left: 14px; }
+.sec { font-size: 60px; font-weight: 300; color: #6e6e6e; line-height: 1; margin-top: 19px; margin-left: 10px; }
 .hosts { display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 6px; margin-top: 28px; font-size: 18px; color: var(--tertiary); }
 .hosts li { display: flex; align-items: center; gap: 7px; }
 .hosts .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); }

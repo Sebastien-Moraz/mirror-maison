@@ -95,8 +95,8 @@ nouvelle carte de nuages, toutes les 3 h.
 - **Xiaomi** : le port UDP 9898 est partagé (`reuseAddr`). Si MagicMirror le bloque, le serveur réessaie chaque minute.
   Un capteur qui renvoie la valeur d'erreur (`10000`) ou `No device` est compté comme sans nouvelle : il passe hors ligne
   après 30 min.
-- **Plex** : une carte par lecture en cours (lecture ou pause), dans l'ordre de démarrage. À partir de 3 lectures, les
-  cartes passent en format compact pour tenir sous les agendas ; au-delà de `plex.maxSessions` (3), seules les plus
+- **Plex** : une carte par lecture en cours (lecture ou pause), dans l'ordre de démarrage. Si les cartes ne tiennent pas sous les
+  agendas (mesuré dans la page), elles passent en format compact, puis les plus anciennes sont masquées ; au-delà de `plex.maxSessions` (3), seules les plus
   récemment actives s'affichent. En démo : `MOCK_PLEX=0..3 bun run mock`. Si le serveur Plex ne répond plus pendant
   ~10 s, le bloc disparaît au lieu de figer une lecture fantôme.
 

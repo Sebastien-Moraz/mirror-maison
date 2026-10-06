@@ -204,13 +204,30 @@ function onPlexData() {
     card.session = s;
   }
   const list = $("plex");
-  const compact = sessions.length > 2;
   sessions.forEach((s, i) => {
     const card = plexCards.get(s.key);
-    card.root.classList.toggle("compact", compact);
     if (list.children[i] !== card.root) list.insertBefore(card.root, list.children[i] ?? null);
     safe(() => renderPlexCard(card));
   });
+  fitPlex();
+}
+
+// La place sous les agendas varie (alerte, titres sur deux lignes) : on mesure plutôt que deviner.
+// Cartes normales si elles tiennent, sinon compactes, sinon on masque les plus anciennes.
+function fitPlex() {
+  const screen = document.querySelector(".screen");
+  const overflows = () => screen.scrollHeight > screen.clientHeight;
+  const cards = [...$("plex").children];
+  for (const c of cards) {
+    c.hidden = false;
+    c.classList.remove("compact");
+  }
+  if (!overflows()) return;
+  for (const c of cards) c.classList.add("compact");
+  for (const c of cards.slice(0, -1)) {
+    if (!overflows()) break;
+    c.hidden = true;
+  }
 }
 
 function renderPlexCard({ session: s, parts: p, shown }) {
@@ -271,6 +288,7 @@ function tick() {
     // Textes relatifs au temps : « Demain », phrase de pluie, capteurs hors ligne…
     safe(renderWeather);
     safe(renderAgendas);
+    safe(fitPlex);
     safe(renderSensors);
     safe(renderAlert);
     if (p.hour === 4 && p.minute === 0 && Date.now() - loadedAt > 5 * 60_000) location.reload();
@@ -280,8 +298,8 @@ function tick() {
 tick();
 
 poll("/api/weather", 60_000, "weather", renderWeather);
-poll("/api/alert", 60_000, "alert", renderAlert);
-poll("/api/calendars", 60_000, "calendars", renderAgendas);
+poll("/api/alert", 60_000, "alert", () => (renderAlert(), fitPlex()));
+poll("/api/calendars", 60_000, "calendars", () => (renderAgendas(), fitPlex()));
 poll("/api/hosts", 15_000, "hosts", renderHosts);
 poll("/api/sensors", 30_000, "sensors", renderSensors);
 poll("/api/plex", 2_000, "plex", onPlexData);
